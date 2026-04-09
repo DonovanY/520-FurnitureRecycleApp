@@ -7,7 +7,7 @@ app = FastAPI(title="Project Auth Backend", version="1.0.0")
 # CORS Setup: Essential for React development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # Vite's default port
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

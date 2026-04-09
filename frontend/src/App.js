@@ -1,26 +1,28 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
 
-// Pages
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ItemDetail from "./pages/ItemDetail";
-
-function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/item/:id" element={<ItemDetail />} />
-        </Routes>
-      </div>
-    </Router>
-  );
+const PrivateRoute = ({ children }) => {
+  const { user } = useAuth()
+  return user ? children : <Navigate to="/login" />
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            } 
+          />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}
