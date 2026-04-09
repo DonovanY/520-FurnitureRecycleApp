@@ -9,7 +9,7 @@ import Navbar from "../components/Navbar";
  * Renders email/password form with error display and link to login.
  */
 function SignupView() {
-  const { email, setEmail, password, setPassword, error, loading, handleSubmit } =
+  const { email, setEmail, password, setPassword, error, loading, success, handleSubmit } =
     useAuthForm("signup");
 
   return (
@@ -22,6 +22,17 @@ function SignupView() {
             Create an Account
           </h1>
 
+          {/* Show confirmation message after successful signup */}
+          {success && (
+            <div className="bg-green-50 text-green-700 text-sm rounded-md p-3 mb-4">
+              Check your email for a confirmation link, then{" "}
+              <Link to="/login" className="font-medium underline">
+                log in
+              </Link>
+              .
+            </div>
+          )}
+
           {/* Display error message from controller */}
           {error && (
             <div className="bg-red-50 text-red-600 text-sm rounded-md p-3 mb-4">
@@ -29,7 +40,8 @@ function SignupView() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Hide the form after successful signup */}
+          {!success && <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
@@ -65,14 +77,16 @@ function SignupView() {
             >
               {loading ? "Creating account..." : "Sign Up"}
             </button>
-          </form>
+          </form>}
 
-          <p className="text-sm text-gray-600 text-center mt-6">
-            Already have an account?{" "}
-            <Link to="/login" className="text-green-600 hover:text-green-700 font-medium">
-              Log In
-            </Link>
-          </p>
+          {!success && (
+            <p className="text-sm text-gray-600 text-center mt-6">
+              Already have an account?{" "}
+              <Link to="/login" className="text-green-600 hover:text-green-700 font-medium">
+                Log In
+              </Link>
+            </p>
+          )}
         </div>
       </main>
     </div>

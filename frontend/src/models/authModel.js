@@ -15,6 +15,13 @@ export async function signUp(email, password) {
     password,
   });
   if (error) throw error;
+
+  // Supabase returns an empty identities array when the email is already registered.
+  // It does this silently for security, so we check and throw our own error.
+  if (data?.user?.identities?.length === 0) {
+    throw new Error("An account with this email already exists. Try logging in instead.");
+  }
+
   return data;
 }
 

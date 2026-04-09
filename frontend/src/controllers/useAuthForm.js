@@ -9,13 +9,14 @@ import * as authModel from "../models/authModel";
  * Keeps the view layer free of auth logic.
  *
  * @param {"login"|"signup"} mode — determines which authModel function to call
- * @returns {{ email, setEmail, password, setPassword, error, loading, handleSubmit }}
+ * @returns {{ email, setEmail, password, setPassword, error, loading, success, handleSubmit }}
  */
 export default function useAuthForm(mode) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null); // error message string, or null
   const [loading, setLoading] = useState(false); // true while waiting for Supabase
+  const [success, setSuccess] = useState(false); // true after successful signup (email confirmation needed)
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -26,12 +27,14 @@ export default function useAuthForm(mode) {
     try {
       if (mode === "signup") {
         await authModel.signUp(email, password);
+        // Don't navigate — user needs to confirm their email first
+        setSuccess(true);
       } else {
         await authModel.signIn(email, password);
+        // On success, Supabase stores the session automatically.
+        // AuthContext detects it via onAuthStateChange and updates user.
+        navigate("/");
       }
-      // On success, Supabase stores the session automatically.
-      // AuthContext detects it via onAuthStateChange and updates user.
-      navigate("/");
     } catch (err) {
       setError(err.message); // view will display this
     } finally {
@@ -39,5 +42,5 @@ export default function useAuthForm(mode) {
     }
   };
 
-  return { email, setEmail, password, setPassword, error, loading, handleSubmit };
+  return { email, setEmail, password, setPassword, error, loading, success, handleSubmit };
 }
