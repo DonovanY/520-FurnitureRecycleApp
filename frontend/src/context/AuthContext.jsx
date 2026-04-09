@@ -1,33 +1,52 @@
-import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { createContext, useContext, useEffect, useState } from "react";
+import * as authModel from "../models/authModel";
 
-const AuthContext = createContext({})
+const AuthContext = createContext({});
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+/**
+ * AuthProvider context wrapper
+ *
+ * Wraps the entire app to provide auth state globally.
+ * Any component can call useAuth() to access user, loading, and signOut.
+ * Delays rendering children until the initial session check completes.
+ */
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // true until first session check completes
 
   useEffect(() => {
-    // 1. Check active sessions on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    // check for an existing session on mount (e.g. user refreshed the page)
+    authModel.getSession().then((session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    // 2. Listen for changes (login, logout, password recovery)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    // Listen for auth state changes (login, logout) and update user automatically.
+    // Allows the app to react to auth changes without manual refresh or re-checks.
+    const subscription = authModel.onAuthStateChange((session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    // cleanup listener on unmount
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await authModel.signOut();
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, signOut: handleSignOut }}>
       {!loading && children}
     </AuthContext.Provider>
-  )
+  );
 }
 
-export const useAuth = () => useContext(AuthContext)
+/**
+ * useAuth hook
+ *
+ * Provides access to auth state from any component.
+ * @returns {{ user: object|null, loading: boolean, signOut: function }}
+ */
+export const useAuth = () => useContext(AuthContext);
