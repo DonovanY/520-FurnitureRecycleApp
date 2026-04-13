@@ -1,7 +1,8 @@
 from functools import lru_cache
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from fastapi import Depends, HTTPException
+from sqlalchemy.orm import Session
+from uuid import UUID
 
 class Settings(BaseSettings):
     database_url: str

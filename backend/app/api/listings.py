@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -94,12 +94,21 @@ def to_listing_detail_response(listing, request_status_for_current_user=None) ->
 
 
 @router.get("", response_model=ListingListResponse)
-def get_listings(db: Session = Depends(get_db)):
+def get_listings(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=50),
+    q: str | None = Query(None),
+    db: Session = Depends(get_db),
+):
     service = ListingService(db)
-    listings = service.list_listings()
+    result = service.list_listings(page=page, page_size=page_size, q=q)
 
     return ListingListResponse(
-        items=[to_listing_summary_response(listing) for listing in listings]
+        items=[to_listing_summary_response(listing) for listing in result["items"]],
+        page=result["page"],
+        page_size=result["page_size"],
+        total=result["total"],
+        total_pages=result["total_pages"],
     )
 
 

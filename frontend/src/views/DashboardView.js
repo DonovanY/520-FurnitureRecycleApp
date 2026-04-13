@@ -4,7 +4,18 @@ import ItemGrid from "../components/ItemGrid";
 import useDashboard from "../controllers/useDashboard";
 
 function DashboardView() {
-  const { listings, searchQuery, setSearchQuery, loading, error } = useDashboard();
+  const {
+    listings,
+    searchQuery,
+    setSearchQuery,
+    loading,
+    error,
+    page,
+    total,
+    totalPages,
+    goToPrevPage,
+    goToNextPage,
+  } = useDashboard();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,7 +40,35 @@ function DashboardView() {
         )}
 
         {!error && !loading && (
-          <ItemGrid listings={listings} />
+          <>
+            <ItemGrid listings={listings} />
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-500">
+                Page {page} of {totalPages} · {total} items
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={goToPrevPage}
+                  disabled={page <= 1}
+                  className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+
+                <button
+                  type="button"
+                  onClick={goToNextPage}
+                  disabled={page >= totalPages}
+                  className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </main>
     </div>

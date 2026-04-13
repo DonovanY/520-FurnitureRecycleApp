@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.crud.listing import get_listing_by_id, get_all_available_listings
+from app.crud.listing import get_listing_by_id, get_available_listings_paginated
 from app.crud.request import get_request_by_listing_and_user, create_item_request
 from app.crud.profile import get_profile_by_id, create_profile
 from app.models.profile import Profile
@@ -38,11 +38,22 @@ class ListingService:
         )
         return create_profile(self.db, new_profile)
 
-    def list_listings(self):
+    def list_listings(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 12,
+        q: str | None = None,
+    ):
         """
-        Return all listings for dashboard display.
+        Return paginated available listings for dashboard display.
         """
-        return get_all_available_listings(self.db)
+        return get_available_listings_paginated(
+            self.db,
+            page=page,
+            page_size=page_size,
+            q=q,
+        )
 
     def get_listing_detail(
         self,

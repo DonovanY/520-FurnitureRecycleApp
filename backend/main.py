@@ -5,6 +5,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import user, listings
+from app.api.notifications import router as notifications_router
 
 app = FastAPI(title="FurnitureRecycle Backend", version="1.0.0")
 
@@ -18,6 +19,7 @@ app.add_middleware(
 
 app.include_router(user.router)
 app.include_router(listings.router)
+app.include_router(notifications_router)
 
 @app.get("/health")
 def health_check():
