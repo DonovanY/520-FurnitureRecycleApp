@@ -3,7 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import DashboardView from "./views/DashboardView";
 import LoginView from "./views/LoginView";
 import SignupView from "./views/SignupView";
-import ItemDetail from "./pages/ItemDetail";
+import ListingDetailPage from "./pages/ListingDetailPage";
 
 function App() {
   return (
@@ -14,7 +14,7 @@ function App() {
             <Route path="/" element={<DashboardView />} />
             <Route path="/login" element={<LoginView />} />
             <Route path="/signup" element={<SignupView />} />
-            <Route path="/item/:id" element={<ItemDetail />} />
+            <Route path="/item/:id" element={<ListingDetailPage />} />
           </Routes>
         </div>
       </Router>

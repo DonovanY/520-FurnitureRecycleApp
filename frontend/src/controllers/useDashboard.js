@@ -1,31 +1,68 @@
-import { useState, useEffect } from "react";
-import { getListings } from "../models/listingsModel";
+import { useEffect, useMemo, useState } from "react";
+import { fetchListings } from "../models/listingsModel";
 
-/**
- * useDashboard controller hook
- *
- * Manages all state and data-fetching logic for the Dashboard view.
- * Keeps the view layer free of business logic.
- *
- * @returns {{ listings, searchQuery, setSearchQuery, loading, error }}
- */
 function useDashboard() {
-  const [listings, setListings] = useState([]);
+  const [allListings, setAllListings] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    async function loadListings() {
+      try {
+        setLoading(true);
+        setError("");
 
-    getListings({ search: searchQuery })
-      .then(setListings)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [searchQuery]);
+        const data = await fetchListings();
+        const rawListings = Array.isArray(data) ? data : (data.items ?? []);
 
-  return { listings, searchQuery, setSearchQuery, loading, error };
+        const normalized = rawListings.map((listing) => ({
+          id: listing.id,
+          title: listing.item?.title ?? "",
+          description: listing.item?.description ?? "",
+          category: listing.item?.category ?? "",
+          condition_level: listing.item?.condition_level ?? "",
+          origin_type: listing.item?.origin_type ?? "",
+          status: listing.item?.status ?? "",
+          city: listing.location?.city ?? "",
+          state: listing.location?.state ?? "",
+          primary_image_url: listing.primary_image_url ?? null,
+          created_at: listing.created_at,
+        }));
+
+        setAllListings(normalized);
+      } catch (err) {
+        setError(err?.response?.data?.detail || "Failed to load listings.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadListings();
+  }, []);
+
+  const listings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return allListings;
+
+    return allListings.filter((listing) => {
+      return (
+        listing.title.toLowerCase().includes(q) ||
+        listing.description.toLowerCase().includes(q) ||
+        listing.category.toLowerCase().includes(q) ||
+        listing.city.toLowerCase().includes(q) ||
+        listing.state.toLowerCase().includes(q)
+      );
+    });
+  }, [allListings, searchQuery]);
+
+  return {
+    listings,
+    searchQuery,
+    setSearchQuery,
+    loading,
+    error,
+  };
 }
 
 export default useDashboard;
