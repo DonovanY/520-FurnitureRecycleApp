@@ -44,7 +44,11 @@ class ListingSummaryResponse(BaseModel):
     created_at: datetime
 
 class ListingListResponse(BaseModel):
-    items: List[ListingSummaryResponse]
+    items: list[ListingSummaryResponse]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
 
 class RequestItemPayload(BaseModel):
     message: Optional[str] = ""
