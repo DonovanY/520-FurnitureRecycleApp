@@ -106,24 +106,31 @@ const MOCK_LISTINGS = [
 	},
 ];
 
-/**
- * Fetch available listings, optionally filtered by a search query.
- *
- * @param {Object} params
- * @param {string} [params.search=""] - Filters results by item title (case-insensitive).
- * @returns {Promise<Array>} Resolves to an array of listing objects.
- */
-export async function getListings({ search = "" } = {}) {
-	await new Promise((resolve) => setTimeout(resolve, 150));
+// /**
+//  * Fetch available listings, optionally filtered by a search query.
+//  *
+//  * @param {Object} params
+//  * @param {string} [params.search=""] - Filters results by item title (case-insensitive).
+//  * @returns {Promise<Array>} Resolves to an array of listing objects.
+//  */
+// export async function getListings({ search = "" } = {}) {
+// 	await new Promise((resolve) => setTimeout(resolve, 150));
 
-	let results = MOCK_LISTINGS.filter((l) => l.status === "available");
+// 	let results = MOCK_LISTINGS.filter((l) => l.status === "available");
 
-	if (search.trim()) {
-		const query = search.trim().toLowerCase();
-		results = results.filter((l) =>
-			l.item.title.toLowerCase().includes(query),
-		);
-	}
+// 	if (search.trim()) {
+// 		const query = search.trim().toLowerCase();
+// 		results = results.filter((l) =>
+// 			l.item.title.toLowerCase().includes(query),
+// 		);
+// 	}
 
-	return results;
+// 	return results;
+// }
+
+import api from "../api/axios";
+
+export async function fetchListings() {
+  const response = await api.get("/listings");
+  return response.data;
 }

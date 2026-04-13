@@ -1,10 +1,13 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import user
+from app.api import user, listings
 
-app = FastAPI(title="Project Auth Backend", version="1.0.0")
+app = FastAPI(title="FurnitureRecycle Backend", version="1.0.0")
 
-# CORS Setup: Essential for React development
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -13,8 +16,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include our modular routers
 app.include_router(user.router)
+app.include_router(listings.router)
 
 @app.get("/health")
 def health_check():
