@@ -8,7 +8,7 @@ from app.dependencies.auth import get_current_user_id
 from app.repositories.notification_repository import NotificationRepository
 from app.services.notification_service import NotificationService
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(prefix="/api/v1/notifications", tags=["notifications"])
 
 
 def get_service(db: Session = Depends(get_db)):
