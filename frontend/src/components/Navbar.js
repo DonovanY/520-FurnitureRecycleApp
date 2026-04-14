@@ -1,13 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
-/**
- * Navbar component
- *
- * Displays the app header with navigation links.
- * Auth-aware: shows Log In / Sign Up when logged out,
- * shows user email and Logout button when logged in.
- */
 function Navbar() {
   const { user, signOut } = useAuth();
 
@@ -17,9 +11,10 @@ function Navbar() {
         FurniCycle
       </Link>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {user ? (
           <>
+            <NotificationBell />
             <Link to="/profile" className="text-sm text-gray-600">
               {user.email}
             </Link>

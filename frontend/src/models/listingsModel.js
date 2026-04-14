@@ -1,129 +1,134 @@
+import { supabase } from "../lib/supabaseClient";
 /**
- * Listings Model
+ * listingsModel.js
  *
- * Data layer for furniture listings. Currently returns mock data that mirrors
- * the Supabase schema shape. Replace getListings() with a real API call to the
- * FastAPI backend once backend endpoints are wired up to Supabase.
- *
- * Schema reference:
- *   listings  → item (title, condition_level, origin_type)
- *             → location (city, state)
- *             → item_images (primary_image_url)
- *
- * condition_level enum: like_new | good | fair | poor
- * origin_type enum:     owned | street_find
- * status enum:          available | reserved | completed | gone | archived
+ * Handles API calls related to listings.
+ * Supports pagination and optional search query.
  */
 
-const MOCK_LISTINGS = [
-	{
-		id: "1",
-		status: "available",
-		item: {
-			title: "Wooden Dining Table",
-			condition_level: "good",
-			// origin_type: "owned",
-		},
-		location: { city: "Amherst", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "2",
-		status: "available",
-		item: {
-			title: "Leather Armchair",
-			condition_level: "like_new",
-			// origin_type: "owned",
-		},
-		location: { city: "Northampton", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "3",
-		status: "available",
-		item: {
-			title: "IKEA Bookshelf",
-			condition_level: "fair",
-			// origin_type: "street_find",
-		},
-		location: { city: "Hadley", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "4",
-		status: "available",
-		item: {
-			title: "Glass Coffee Table",
-			condition_level: "good",
-			// origin_type: "owned",
-		},
-		location: { city: "Amherst", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "5",
-		status: "available",
-		item: {
-			title: "Office Chair",
-			condition_level: "poor",
-			// origin_type: "street_find",
-		},
-		location: { city: "South Hadley", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "6",
-		status: "available",
-		item: {
-			title: "Queen Bed Frame",
-			condition_level: "like_new",
-			// origin_type: "owned",
-		},
-		location: { city: "Northampton", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "7",
-		status: "available",
-		item: {
-			title: "Standing Lamp",
-			condition_level: "good",
-			// origin_type: "street_find",
-		},
-		location: { city: "Amherst", state: "MA" },
-		primary_image_url: null,
-	},
-	{
-		id: "8",
-		status: "available",
-		item: {
-			title: "3-Drawer Dresser",
-			condition_level: "fair",
-			// origin_type: "owned",
-		},
-		location: { city: "Belchertown", state: "MA" },
-		primary_image_url: null,
-	},
-];
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 
 /**
- * Fetch available listings, optionally filtered by a search query.
+ * Fetch listings with pagination + optional search
  *
  * @param {Object} params
- * @param {string} [params.search=""] - Filters results by item title (case-insensitive).
- * @returns {Promise<Array>} Resolves to an array of listing objects.
+ * @param {number} params.page
+ * @param {number} params.pageSize
+ * @param {string} params.search
+ *
+ * @returns {Promise<{
+ *   items: Array,
+ *   page: number,
+ *   page_size: number,
+ *   total: number,
+ *   total_pages: number
+ * }>}
  */
-export async function getListings({ search = "" } = {}) {
-	await new Promise((resolve) => setTimeout(resolve, 150));
+export async function fetchListings({
+  page = 1,
+  pageSize = 12,
+  search = "",
+} = {}) {
+  try {
+    const params = new URLSearchParams();
 
-	let results = MOCK_LISTINGS.filter((l) => l.status === "available");
+    params.set("page", String(page));
+    params.set("page_size", String(pageSize));
 
-	if (search.trim()) {
-		const query = search.trim().toLowerCase();
-		results = results.filter((l) =>
-			l.item.title.toLowerCase().includes(query),
-		);
-	}
+    if (search && search.trim()) {
+      params.set("q", search.trim());
+    }
 
-	return results;
+    const url = `${API_BASE_URL}/api/v1/listings?${params.toString()}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to fetch listings: ${text}`);
+    }
+
+    const data = await response.json();
+
+    if (Array.isArray(data)) {
+      return {
+        items: data,
+        page: 1,
+        page_size: data.length,
+        total: data.length,
+        total_pages: 1,
+      };
+    }
+
+    return {
+      items: data.items ?? [],
+      page: data.page ?? page,
+      page_size: data.page_size ?? pageSize,
+      total: data.total ?? 0,
+      total_pages: data.total_pages ?? 1,
+    };
+  } catch (error) {
+    console.error("fetchListings error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch single listing detail
+ *
+ * @param {string} listingId
+ */
+export async function fetchListingDetail(listingId) {
+  const url = `${API_BASE_URL}/api/v1/listings/${listingId}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch listing detail.");
+  }
+
+  return await response.json();
+}
+
+/**
+ * Request a listing (pickup request)
+ *
+ * Requires user to be logged in (Supabase token)
+ */
+
+async function getAccessToken() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  return session?.access_token || "";
+}
+
+export async function requestListing(listingId, message = "") {
+  const token = await getAccessToken();
+
+  const url = `${API_BASE_URL}/api/v1/listings/${listingId}/request`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      message,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to request item.");
+  }
+
+  return await response.json();
 }
