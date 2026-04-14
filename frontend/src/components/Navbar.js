@@ -20,20 +20,21 @@ function Navbar() {
       <div className="flex items-center gap-3">
         {user ? (
           <>
-            <span className="text-sm text-gray-600">{user.email}</span>
-            <button
-              onClick={signOut}
-              className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2"
-            >
-              Logout
-            </button>
+            <Link to="/profile" className="text-sm text-gray-600">
+              {user.email}
+            </Link>
+            <Link to="/">
+              <button
+                onClick={signOut}
+                className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2"
+              >
+                Logout
+              </button>
+            </Link>
           </>
         ) : (
           <>
-            <Link
-              to="/login"
-              className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2"
-            >
+            <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900 px-3 py-2">
               Log In
             </Link>
             <Link

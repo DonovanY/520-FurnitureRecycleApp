@@ -4,6 +4,7 @@ import DashboardView from "./views/DashboardView";
 import LoginView from "./views/LoginView";
 import SignupView from "./views/SignupView";
 import ItemDetail from "./pages/ItemDetail";
+import ProfileView from "./views/ProfileView";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/login" element={<LoginView />} />
             <Route path="/signup" element={<SignupView />} />
             <Route path="/item/:id" element={<ItemDetail />} />
+            <Route path="/profile" element={<ProfileView />} />
           </Routes>
         </div>
       </Router>
