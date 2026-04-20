@@ -1,6 +1,9 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 import useProfile from "../controllers/useProfile";
+import SearchBar from "../components/SearchBar";
+import ItemGrid from "../components/ItemGrid";
+import useProfileListing from "../controllers/useProfileListing";
 
 // ─── Shared input styles ───────────────────────────────────────────────────────
 const inputClass =
@@ -142,34 +145,83 @@ function StatusBadge({ status }) {
 }
 
 function PostedItemsTab() {
+  const {
+    listings,
+    searchQuery,
+    setSearchQuery,
+    loading,
+    error,
+    page,
+    total,
+    totalPages,
+    goToPrevPage,
+    goToNextPage,
+  } = useProfileListing();
+
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            {["Title", "Category", "Date Posted", "Status", ""].map((h) => (
-              <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {MOCK_POSTED.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
-              <td className="px-6 py-4 text-gray-500">{item.category}</td>
-              <td className="px-6 py-4 text-gray-500">{item.date}</td>
-              <td className="px-6 py-4"><StatusBadge status={item.status} /></td>
-              <td className="px-6 py-4 text-right">
-                <button className="text-xs font-medium text-green-600 hover:text-green-800">Edit</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {MOCK_POSTED.length === 0 && (
-        <p className="px-6 py-12 text-center text-sm text-gray-400">No posted items yet.</p>
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  
+      <div className="mb-8 flex w-full items-center justify-between gap-4">
+        <div className="flex-1 max-w-lg">
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        </div>
+
+    
+        <button className="shrink-0 flex items-center gap-2 rounded-lg border border-green-600 bg-white px-5 py-2.5 text-sm font-semibold text-green-600 shadow-sm hover:bg-green-50 transition-all active:scale-95">
+          <span className="text-lg">+</span> Add New Item
+        </button>
+      </div>
+
+
+      {error && (
+              <div className="text-red-600 text-center py-8">{error}</div>
+            )}
+
+      {!error && loading && (
+              <div className="text-center py-16 text-gray-400">Loading...</div>
+            )}
+
+      {!error && !loading && (
+        <>
+          <div className="min-h-[400px]">
+            <ItemGrid listings={listings} />
+          </div>
+
+          <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-gray-200 pt-8 sm:flex-row">
+         
+            <div className="text-sm text-gray-500">
+              Page {page} of {totalPages} · {total} items
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={goToPrevPage}
+                  disabled={page <= 1}
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                
+                <span className="flex items-center px-4 text-sm font-medium text-gray-600 bg-gray-100 rounded-md py-2">
+                  {page} / {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={goToNextPage}
+                  disabled={page >= totalPages}
+                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
-    </div>
+    </main>
   );
 }
 
@@ -251,8 +303,8 @@ function ProfileView() {
       <Navbar />
 
       {/* ── Page header ── */}
-      <div className="border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="bg-white">
+        <div className="mx-auto max-w-7xl border-b border-gray-200 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 py-6">
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-300">
               <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width="72" height="72" aria-hidden>
