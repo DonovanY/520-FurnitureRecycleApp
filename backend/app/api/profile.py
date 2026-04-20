@@ -54,20 +54,24 @@ def to_posted_listing_summary_response(listing) -> PostedListingSummaryResponse:
 
 @router.get("/posted_items", response_model=PostedListingListResponse)
 def get_posted_listings(
-    user_id: str = Depends(validate_token),
+    auth_user: str = Depends(validate_token),
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=50),
     q: str | None = Query(None),
     db: Session = Depends(get_db),
 ):
     service = ProfileListingService(db)
+
+    user_id = auth_user.get("sub")
+
     result = service.list_posted_listings(user_id=user_id, page=page, page_size=page_size, q=q)
 
-    return PostedListingSummaryResponse(
+    return PostedListingListResponse(
         items=[to_posted_listing_summary_response(listing) for listing in result["items"]],
         page=result["page"],
         page_size=result["page_size"],
         total=result["total"],
         total_pages=result["total_pages"],
     )
+
 
