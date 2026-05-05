@@ -23,3 +23,12 @@ def list_notifications(
     service: NotificationService = Depends(get_service),
 ):
     return service.list_notifications(user_id, page, page_size)
+
+
+@router.get("/unread-count")
+def get_unread_count(
+    user_id: UUID = Depends(get_current_user_id),
+    service: NotificationService = Depends(get_service),
+):
+    count = service.repo.unread_count(user_id)
+    return {"unread_count": count}

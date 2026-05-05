@@ -14,6 +14,7 @@ import * as authModel from "../models/authModel";
 export default function useAuthForm(mode) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState(null); // error message string, or null
   const [loading, setLoading] = useState(false); // true while waiting for Supabase
   const [success, setSuccess] = useState(false); // true after successful signup (email confirmation needed)
@@ -26,7 +27,7 @@ export default function useAuthForm(mode) {
 
     try {
       if (mode === "signup") {
-        await authModel.signUp(email, password);
+        await authModel.signUp(email, password, fullName);
         // Don't navigate — user needs to confirm their email first
         setSuccess(true);
       } else {
@@ -42,5 +43,16 @@ export default function useAuthForm(mode) {
     }
   };
 
-  return { email, setEmail, password, setPassword, error, loading, success, handleSubmit };
+  return {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    fullName,
+    setFullName,
+    error,
+    loading,
+    success,
+    handleSubmit,
+  };
 }

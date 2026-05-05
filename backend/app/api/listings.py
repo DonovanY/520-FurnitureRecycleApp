@@ -86,7 +86,7 @@ def to_listing_detail_response(listing, request_status_for_current_user=None) ->
         owner=OwnerSchema(
             id=str(listing.poster.id),
             email=listing.poster.email,
-            full_name=None,
+            full_name=listing.poster.full_name,
         ),
         created_at=listing.created_at,
         request_status_for_current_user=request_status_for_current_user,

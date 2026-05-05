@@ -7,6 +7,7 @@ class Profile(Base):
 
     id = Column(String, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False, index=True)
+    full_name = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     listings = relationship("Listing", back_populates="poster")

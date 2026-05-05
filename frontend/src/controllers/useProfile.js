@@ -12,6 +12,8 @@ import { useAuth } from "../context/AuthContext";
  */
 export default function useProfile() {
   const { user } = useAuth();
+  const [fullName, setFullName] = useState(user?.user_metadata?.full_name || "");
+  const [gender, setGender] = useState(user?.user_metadata?.gender || "");
   const [email, setEmail] = useState(user.email);
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,14 @@ export default function useProfile() {
 
     try {
       const updateData = {};
+
+      if (fullName !== (user?.user_metadata?.full_name || "")) {
+        updateData.fullName = fullName;
+      }
+
+      if (gender !== (user?.user_metadata?.gender || "")) {
+        updateData.gender = gender;
+      }
 
       if (email !== user.email) {
         updateData.email = email;
@@ -50,6 +60,10 @@ export default function useProfile() {
   };
 
   return {
+    fullName,
+    setFullName,
+    gender,
+    setGender,
     email,
     setEmail,
     newPassword,
