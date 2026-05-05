@@ -9,10 +9,15 @@ export async function signIn(email, password) {
   return data;
 }
 
-export async function signUp(email, password) {
+export async function signUp(email, password, fullName) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        full_name: fullName,
+      },
+    },
   });
   if (error) throw error;
 
@@ -31,13 +36,15 @@ export async function signOut() {
 }
 
 export async function getSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   return session;
 }
 
 export function onAuthStateChange(callback) {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    (_event, session) => callback(session)
-  );
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => callback(session));
   return subscription;
 }

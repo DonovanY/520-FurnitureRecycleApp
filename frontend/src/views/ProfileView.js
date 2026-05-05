@@ -4,6 +4,7 @@ import useProfile from "../controllers/useProfile";
 import SearchBar from "../components/SearchBar";
 import ItemGrid from "../components/ItemGrid";
 import useProfileListing from "../controllers/useProfileListing";
+import { useAuth } from "../context/AuthContext";
 
 // ─── Shared input styles ───────────────────────────────────────────────────────
 const inputClass =
@@ -15,7 +16,13 @@ const selectClass = `${inputClass} cursor-pointer appearance-none pr-9`;
 function ChevronIcon({ className }) {
   return (
     <svg className={className} width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-      <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M3 5l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -23,20 +30,26 @@ function ChevronIcon({ className }) {
 function FieldGroup({ label, children, htmlFor }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-sm font-medium text-gray-700">{label}</label>
+      <label htmlFor={htmlFor} className="text-sm font-medium text-gray-700">
+        {label}
+      </label>
       {children}
     </div>
   );
 }
 
-function SelectField({ label, options }) {
+function SelectField({ label, options, value, onChange }) {
   return (
     <FieldGroup label={label}>
       <div className="relative">
-        <select className={selectClass} defaultValue="">
-          <option value="" disabled>Select {label}</option>
+        <select className={selectClass} value={value} onChange={onChange}>
+          <option value="" disabled>
+            Select {label}
+          </option>
           {options.map((o) => (
-            <option key={o} value={o}>{o}</option>
+            <option key={o} value={o}>
+              {o}
+            </option>
           ))}
         </select>
         <ChevronIcon className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
@@ -45,7 +58,17 @@ function SelectField({ label, options }) {
   );
 }
 
-function TextField({ label, placeholder, type = "text", defaultValue, value, onChange, autoComplete, id, spellCheck }) {
+function TextField({
+  label,
+  placeholder,
+  type = "text",
+  defaultValue,
+  value,
+  onChange,
+  autoComplete,
+  id,
+  spellCheck,
+}) {
   const controlled = value !== undefined && onChange !== undefined;
   return (
     <FieldGroup label={label} htmlFor={id}>
@@ -63,13 +86,23 @@ function TextField({ label, placeholder, type = "text", defaultValue, value, onC
 }
 
 // ─── Tab: Profile Settings ─────────────────────────────────────────────────────
-function ProfileSettingsTab({ email, setEmail, newPassword, setNewPassword, loading, error, success, handleEditProfile }) {
+function ProfileSettingsTab({
+  fullName,
+  setFullName,
+  gender,
+  setGender,
+  email,
+  setEmail,
+  newPassword,
+  setNewPassword,
+  loading,
+  error,
+  success,
+  handleEditProfile,
+}) {
   return (
     <form onSubmit={handleEditProfile}>
-
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
-      )}
+      {error && <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
       {success && !error && (
         <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
           Profile updated successfully.
@@ -78,18 +111,45 @@ function ProfileSettingsTab({ email, setEmail, newPassword, setNewPassword, load
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8">
         {/* Personal details */}
-        <section className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="personal-heading">
-          <h3 id="personal-heading" className="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wide">Personal Details</h3>
+        <section
+          className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
+          aria-labelledby="personal-heading"
+        >
+          <h3
+            id="personal-heading"
+            className="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wide"
+          >
+            Personal Details
+          </h3>
           <div className="flex flex-col gap-5">
-            <TextField id="profile-full-name" label="Full Name" placeholder="Input full name" autoComplete="name" />
-            <TextField id="profile-nick-name" label="Nick Name" placeholder="Input nick name" autoComplete="nickname" />
-            <SelectField label="Gender" options={["Male", "Female", "Non-binary", "Prefer not to say"]} />
+            <TextField
+              id="profile-full-name"
+              label="Full Name"
+              placeholder="Input full name"
+              autoComplete="name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+            <SelectField
+              label="Gender"
+              options={["Male", "Female", "Non-binary", "Prefer not to say"]}
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+            />
           </div>
         </section>
 
         {/* Account */}
-        <section className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6" aria-labelledby="account-heading">
-          <h3 id="account-heading" className="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wide">Account</h3>
+        <section
+          className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
+          aria-labelledby="account-heading"
+        >
+          <h3
+            id="account-heading"
+            className="mb-4 text-sm font-semibold text-gray-700 uppercase tracking-wide"
+          >
+            Account
+          </h3>
           <div className="flex flex-col gap-5">
             <TextField
               id="profile-gmail"
@@ -129,21 +189,6 @@ function ProfileSettingsTab({ email, setEmail, newPassword, setNewPassword, load
 }
 
 // ─── Tab: Posted Items ─────────────────────────────────────────────────────────
-const MOCK_POSTED = [
-  { id: 1, title: "Blue Mountain Bike", category: "Sports", date: "2024-03-10", status: "Active" },
-  { id: 2, title: "Vintage Leather Sofa", category: "Furniture", date: "2024-02-22", status: "Active" },
-  { id: 3, title: "Canon DSLR Camera", category: "Electronics", date: "2024-01-15", status: "Closed" },
-];
-
-function StatusBadge({ status }) {
-  const isActive = status === "Active";
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-      {status}
-    </span>
-  );
-}
-
 function PostedItemsTab() {
   const {
     listings,
@@ -160,26 +205,19 @@ function PostedItemsTab() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-  
       <div className="mb-8 flex w-full items-center justify-between gap-4">
         <div className="flex-1 max-w-lg">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-    
         <button className="shrink-0 flex items-center gap-2 rounded-lg border border-green-600 bg-white px-5 py-2.5 text-sm font-semibold text-green-600 shadow-sm hover:bg-green-50 transition-all active:scale-95">
           <span className="text-lg">+</span> Add New Item
         </button>
       </div>
 
+      {error && <div className="text-red-600 text-center py-8">{error}</div>}
 
-      {error && (
-              <div className="text-red-600 text-center py-8">{error}</div>
-            )}
-
-      {!error && loading && (
-              <div className="text-center py-16 text-gray-400">Loading...</div>
-            )}
+      {!error && loading && <div className="text-center py-16 text-gray-400">Loading...</div>}
 
       {!error && !loading && (
         <>
@@ -188,7 +226,6 @@ function PostedItemsTab() {
           </div>
 
           <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-gray-200 pt-8 sm:flex-row">
-         
             <div className="text-sm text-gray-500">
               Page {page} of {totalPages} · {total} items
             </div>
@@ -203,7 +240,7 @@ function PostedItemsTab() {
                 >
                   Previous
                 </button>
-                
+
                 <span className="flex items-center px-4 text-sm font-medium text-gray-600 bg-gray-100 rounded-md py-2">
                   {page} / {totalPages}
                 </span>
@@ -238,7 +275,12 @@ function RequestedItemsTab() {
         <thead className="bg-gray-50">
           <tr>
             {["Title", "Category", "Date Requested", "Status", ""].map((h) => (
-              <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+              <th
+                key={h}
+                className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
+              >
+                {h}
+              </th>
             ))}
           </tr>
         </thead>
@@ -249,12 +291,16 @@ function RequestedItemsTab() {
               <td className="px-6 py-4 text-gray-500">{item.category}</td>
               <td className="px-6 py-4 text-gray-500">{item.date}</td>
               <td className="px-6 py-4">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${item.status === "Fulfilled" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${item.status === "Fulfilled" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                >
                   {item.status}
                 </span>
               </td>
               <td className="px-6 py-4 text-right">
-                <button className="text-xs font-medium text-green-600 hover:text-green-800">View</button>
+                <button className="text-xs font-medium text-green-600 hover:text-green-800">
+                  View
+                </button>
               </td>
             </tr>
           ))}
@@ -269,7 +315,7 @@ function RequestedItemsTab() {
 
 // ─── Tab config ────────────────────────────────────────────────────────────────
 const TABS = [
-   {
+  {
     key: "settings",
     label: "Profile Settings",
     description: "Manage your personal details and account credentials.",
@@ -283,16 +329,25 @@ const TABS = [
     key: "requested",
     label: "Requested Items",
     description: "Items you have requested from others.",
-  }
+  },
 ];
 
 // ─── Main ProfileView ──────────────────────────────────────────────────────────
 function ProfileView() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("settings");
   const {
-    email, setEmail,
-    newPassword, setNewPassword,
-    loading, error, success,
+    fullName,
+    setFullName,
+    gender,
+    setGender,
+    email,
+    setEmail,
+    newPassword,
+    setNewPassword,
+    loading,
+    error,
+    success,
     handleEditProfile,
   } = useProfile();
 
@@ -307,14 +362,22 @@ function ProfileView() {
         <div className="mx-auto max-w-7xl border-b border-gray-200 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 py-6">
             <div className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-300">
-              <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" width="72" height="72" aria-hidden>
+              <svg
+                viewBox="0 0 72 72"
+                xmlns="http://www.w3.org/2000/svg"
+                width="72"
+                height="72"
+                aria-hidden
+              >
                 <rect width="72" height="72" fill="#d1d5db" />
                 <circle cx="36" cy="28" r="13" fill="#e5e7eb" />
                 <ellipse cx="36" cy="62" rx="22" ry="14" fill="#e5e7eb" />
               </svg>
             </div>
             <div>
-              <div className="text-lg font-semibold text-gray-900">Alexa Rawles</div>
+              <div className="text-lg font-semibold text-gray-900">
+                {user?.user_metadata?.full_name || user?.email}
+              </div>
             </div>
           </div>
 
@@ -353,6 +416,10 @@ function ProfileView() {
         {activeTab === "requested" && <RequestedItemsTab />}
         {activeTab === "settings" && (
           <ProfileSettingsTab
+            fullName={fullName}
+            setFullName={setFullName}
+            gender={gender}
+            setGender={setGender}
             email={email}
             setEmail={setEmail}
             newPassword={newPassword}
