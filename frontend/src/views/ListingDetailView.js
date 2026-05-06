@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 function DetailMetaRow({ label, value }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
-      <span className="w-32 text-sm font-medium text-gray-500">{label}</span>
-      <span className="text-sm text-gray-900">{value || "N/A"}</span>
+      <span className="w-32 text-sm font-semibold text-gray-600">{label}</span>
+      <span className="text-sm font-medium text-gray-900">{value || "N/A"}</span>
     </div>
   );
 }
@@ -35,9 +35,7 @@ function ListingDetailView({
           </Link>
         </div>
 
-        {loading && (
-          <div className="text-center py-20 text-gray-400">Loading listing...</div>
-        )}
+        {loading && <div className="text-center py-20 text-gray-400">Loading listing...</div>}
 
         {!loading && error && (
           <div className="bg-white rounded-xl shadow-sm border border-red-100 p-8 text-center">
@@ -57,9 +55,7 @@ function ListingDetailView({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-gray-400 text-sm">
-                      No image available
-                    </span>
+                    <span className="text-gray-400 text-sm">No image available</span>
                   )}
                 </div>
 
@@ -67,21 +63,19 @@ function ListingDetailView({
                   <div className="mb-6">
                     <div className="flex flex-wrap items-center gap-3 mb-3">
                       <span
-                        className={`text-xs font-medium px-3 py-1 rounded-full ${condition.classes}`}
+                        className={`text-sm font-semibold px-3 py-1.5 rounded-full ${condition.classes}`}
                       >
                         {condition.label}
                       </span>
 
                       {listing.item?.status && (
-                        <span className="text-xs font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-700">
+                        <span className="text-sm font-semibold px-3 py-1.5 rounded-full bg-green-100 text-green-800">
                           {listing.item.status}
                         </span>
                       )}
                     </div>
 
-                    <h1 className="text-3xl font-bold text-gray-900">
-                      {listing.item?.title}
-                    </h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{listing.item?.title}</h1>
 
                     {listing.location && (
                       <div className="mt-3 flex items-center text-gray-500 text-sm">
@@ -106,23 +100,15 @@ function ListingDetailView({
                         </svg>
                         <span>
                           {listing.location.city}
-                          {listing.location.state
-                            ? `, ${listing.location.state}`
-                            : ""}
+                          {listing.location.state ? `, ${listing.location.state}` : ""}
                         </span>
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-4 pb-6 border-b border-gray-100">
-                    <DetailMetaRow
-                      label="Category"
-                      value={listing.item?.category || "Furniture"}
-                    />
-                    <DetailMetaRow
-                      label="Condition"
-                      value={condition.label}
-                    />
+                    <DetailMetaRow label="Category" value={listing.item?.category || "Furniture"} />
+                    <DetailMetaRow label="Condition" value={condition.label} />
                     <DetailMetaRow
                       label="Origin Type"
                       value={listing.item?.origin_type || "Unknown"}
@@ -134,9 +120,7 @@ function ListingDetailView({
                   </div>
 
                   <div className="py-6 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                      Description
-                    </h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-3">Description</h2>
                     <p className="text-sm leading-7 text-gray-600 whitespace-pre-line">
                       {listing.item?.description ||
                         "No description has been provided for this item."}
@@ -144,12 +128,10 @@ function ListingDetailView({
                   </div>
 
                   <div className="pt-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-3">
-                      Request This Item
-                    </h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-3">Request This Item</h2>
                     <p className="text-sm text-gray-500 mb-4">
-                      Send a short message to let the owner know why you are
-                      interested and coordinate next steps.
+                      Send a short message to let the owner know why you are interested and
+                      coordinate next steps.
                     </p>
 
                     <textarea
