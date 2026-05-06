@@ -14,6 +14,8 @@ from app.schemas.listing import (
     ItemRequestResponse,
     RequesterSummary,
     ListingImageSchema,
+    CreateListingPayload,
+    CreateListingResponse,
 )
 from app.services.listing_service import ListingService
 
@@ -110,6 +112,30 @@ def get_listings(
         total=result["total"],
         total_pages=result["total_pages"],
     )
+
+
+@router.post("", response_model=CreateListingResponse, status_code=201)
+def create_listing(
+    payload: CreateListingPayload,
+    auth_user: dict = Depends(validate_token),
+    db: Session = Depends(get_db),
+):
+    """
+    Create a new listing.
+    Requires authentication.
+    """
+    from app.crud.listing import create_listing as create_listing_crud
+    
+    user_id = auth_user.get("sub")
+    
+    listing = create_listing_crud(
+        db=db,
+        user_id=user_id,
+        payload=payload.model_dump(),
+        image_url=payload.image_url,
+    )
+    
+    return CreateListingResponse(id=str(listing.id))
 
 
 @router.get("/{listing_id}", response_model=ListingDetailResponse)
