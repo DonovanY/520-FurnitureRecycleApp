@@ -93,7 +93,10 @@ class RequestedItemSummary(BaseModel):
     title: str
     category: Optional[str] = None
     condition_level: str
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
     city: Optional[str] = None
+    state: Optional[str] = None
     primary_image_url: Optional[str] = None
     request_id: str
     request_status: str

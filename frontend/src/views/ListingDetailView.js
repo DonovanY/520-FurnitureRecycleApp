@@ -92,10 +92,10 @@ function ListingDetailView({
 
                       <h1 className="text-3xl font-bold text-gray-900">{listing.item?.title}</h1>
 
-                      {listing.location && (
-                        <div className="mt-3 flex items-center text-gray-500 text-sm">
+                      {listing.location && (listing.location.address_line_1 || listing.location.city) && (
+                        <div className="mt-3 flex items-start text-gray-500 text-sm">
                           <svg
-                            className="w-4 h-4 mr-2 flex-shrink-0"
+                            className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -113,9 +113,20 @@ function ListingDetailView({
                               d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                             />
                           </svg>
-                          <span>
-                            {listing.location.city}
-                            {listing.location.state ? `, ${listing.location.state}` : ""}
+                          <span className="leading-snug">
+                            {listing.location.address_line_1 ? (
+                              <>
+                                {listing.location.address_line_1}
+                                {listing.location.address_line_2 && `, ${listing.location.address_line_2}`}
+                                {listing.location.city && `, ${listing.location.city}`}
+                                {listing.location.state && `, ${listing.location.state}`}
+                              </>
+                            ) : (
+                              <>
+                                {listing.location.city}
+                                {listing.location.state ? `, ${listing.location.state}` : ""}
+                              </>
+                            )}
                           </span>
                         </div>
                       )}

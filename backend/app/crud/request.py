@@ -1,7 +1,8 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.request import ItemRequest
 from app.models.profile import Profile
 from app.models.listing import Listing
+from app.models.location import Location
 
 def get_request_by_listing_and_user(db: Session, listing_id: str, requester_user_id: str):
     return (
@@ -34,6 +35,7 @@ def get_requests_by_user(db: Session, user_id: str):
     return (
         db.query(ItemRequest)
         .join(Listing, ItemRequest.listing_id == Listing.id)
+        .options(joinedload(ItemRequest.listing).joinedload(Listing.location))
         .filter(ItemRequest.requester_user_id == user_id)
         .order_by(ItemRequest.created_at.desc())
         .all()

@@ -27,6 +27,7 @@ def get_listings_by_user_id(db: Session, user_id: str):
             joinedload(Listing.poster),
             joinedload(Listing.requests),
             joinedload(Listing.images),
+            joinedload(Listing.location),
         )
         .filter(Listing.poster_user_id == user_id)
         .order_by(Listing.created_at.desc())

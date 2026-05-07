@@ -46,8 +46,10 @@ function useProfileListing() {
           condition_level: listing.item?.condition_level ?? "",
           origin_type: listing.item?.origin_type ?? "",
           status: listing.item?.status ?? "",
+          address_line_1: listing.location?.address_line_1 ?? null,
+          address_line_2: listing.location?.address_line_2 ?? null,
           city: listing.location?.city ?? "",
-          state: listing.location?.state ?? "",
+          state: listing.location?.state ?? null,
           primary_image_url: listing.primary_image_url ?? null,
           created_at: listing.created_at,
         }));

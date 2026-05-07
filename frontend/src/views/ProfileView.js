@@ -323,7 +323,10 @@ function RequestedItemsTab() {
     title: item.title,
     category: item.category,
     condition_level: item.condition_level,
+    address_line_1: item.address_line_1 ?? null,
+    address_line_2: item.address_line_2 ?? null,
     city: item.city,
+    state: item.state ?? null,
     primary_image_url: item.primary_image_url,
   }));
 
