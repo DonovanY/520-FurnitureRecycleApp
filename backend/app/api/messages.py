@@ -50,11 +50,11 @@ def send_message(
     recipient = db.query(Profile).filter(Profile.id == message_data.recipient_user_id).first()
     
     return MessageResponse(
-        id=created_message.id,
-        listing_id=created_message.listing_id,
-        sender_user_id=created_message.sender_user_id,
+        id=str(created_message.id),
+        listing_id=str(created_message.listing_id),
+        sender_user_id=str(created_message.sender_user_id),
         sender_name=sender.full_name if sender else None,
-        recipient_user_id=created_message.recipient_user_id,
+        recipient_user_id=str(created_message.recipient_user_id),
         recipient_name=recipient.full_name if recipient else None,
         content=created_message.content,
         is_read=created_message.is_read,
@@ -104,11 +104,11 @@ def get_conversation(
         recipient = db.query(Profile).filter(Profile.id == msg.recipient_user_id).first()
         
         message_responses.append(MessageResponse(
-            id=msg.id,
-            listing_id=msg.listing_id,
-            sender_user_id=msg.sender_user_id,
+            id=str(msg.id),
+            listing_id=str(msg.listing_id),
+            sender_user_id=str(msg.sender_user_id),
             sender_name=sender.full_name if sender else None,
-            recipient_user_id=msg.recipient_user_id,
+            recipient_user_id=str(msg.recipient_user_id),
             recipient_name=recipient.full_name if recipient else None,
             content=msg.content,
             is_read=msg.is_read,

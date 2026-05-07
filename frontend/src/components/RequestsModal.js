@@ -62,7 +62,7 @@ function RequestsModal({ listingId, listingTitle, onClose, onRequestUpdated }) {
 
   const handleOpenChat = (request) => {
     setSelectedRequester({
-      id: request.requester_user_id,
+      id: request.requester.id,
       name: request.requester.full_name || request.requester.email,
     });
     setChatOpen(true);

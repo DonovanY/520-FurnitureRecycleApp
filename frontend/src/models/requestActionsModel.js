@@ -48,17 +48,19 @@ export async function sendMessage(listingId, recipientUserId, content) {
     throw new Error("Authentication required");
   }
 
+  const payload = {
+    listing_id: listingId,
+    recipient_user_id: recipientUserId,
+    content,
+  };
+
   const response = await fetch(`${API_BASE_URL}/api/v1/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({
-      listing_id: listingId,
-      recipient_user_id: recipientUserId,
-      content,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
