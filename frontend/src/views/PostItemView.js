@@ -5,6 +5,14 @@ import PostItemForm from "../components/PostItemForm";
 import usePostItem from "../controllers/usePostItem";
 import { fetchListingById } from "../api/listingsApi";
 
+// Separate component so usePostItem only runs after initialData is ready.
+// If it lived in PostItemView, useState would initialise with null before
+// the fetch completes and never re-run when data arrived.
+function EditForm({ initialData, listingId }) {
+  const formProps = usePostItem({ initialData, listingId });
+  return <PostItemForm {...formProps} isEdit />;
+}
+
 function PostItemView() {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("edit");
@@ -20,10 +28,6 @@ function PostItemView() {
       .catch(() => setPrefillError("Could not load listing for editing."))
       .finally(() => setPrefillLoading(false));
   }, [editId]);
-
-  const formProps = usePostItem(
-    editId ? { initialData, listingId: editId } : undefined
-  );
 
   const isEdit = !!editId;
 
@@ -52,13 +56,22 @@ function PostItemView() {
             </div>
           )}
 
-          {!prefillLoading && !prefillError && (
-            <PostItemForm {...formProps} isEdit={isEdit} />
+          {!prefillLoading && !prefillError && isEdit && initialData && (
+            <EditForm initialData={initialData} listingId={editId} />
+          )}
+
+          {!isEdit && (
+            <CreateForm />
           )}
         </div>
       </main>
     </div>
   );
+}
+
+function CreateForm() {
+  const formProps = usePostItem();
+  return <PostItemForm {...formProps} isEdit={false} />;
 }
 
 export default PostItemView;
