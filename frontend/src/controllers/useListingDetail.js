@@ -36,9 +36,7 @@ export default function useListingDetail() {
       const data = await fetchListingById(id);
       setListing(data);
     } catch (err) {
-      setError(
-        err?.response?.data?.detail || "Failed to load listing details."
-      );
+      setError(err?.response?.data?.detail || "Failed to load listing details.");
     } finally {
       setLoading(false);
     }
@@ -82,10 +80,11 @@ export default function useListingDetail() {
 
       setRequestSuccess("Your request has been submitted successfully.");
       setRequestMessage("");
+
+      // Reload listing to get the user_request field populated
+      await loadListing();
     } catch (err) {
-      setError(
-        err?.response?.data?.detail || "Failed to submit item request."
-      );
+      setError(err?.response?.data?.detail || "Failed to submit item request.");
     } finally {
       setSubmittingRequest(false);
     }

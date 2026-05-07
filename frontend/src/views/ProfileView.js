@@ -4,7 +4,9 @@ import Navbar from "../components/Navbar";
 import useProfile from "../controllers/useProfile";
 import SearchBar from "../components/SearchBar";
 import ItemGrid from "../components/ItemGrid";
+import PostedItemCard from "../components/PostedItemCard";
 import useProfileListing from "../controllers/useProfileListing";
+import useRequestedItems from "../controllers/useRequestedItems";
 import { useAuth } from "../context/AuthContext";
 
 // ─── Shared input styles ───────────────────────────────────────────────────────
@@ -227,7 +229,11 @@ function PostedItemsTab() {
       {!error && !loading && (
         <>
           <div className="min-h-[400px]">
-            <ItemGrid listings={listings} />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {listings.map((listing) => (
+                <PostedItemCard key={listing.id} listing={listing} />
+              ))}
+            </div>
           </div>
 
           <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-gray-200 pt-8 sm:flex-row">
@@ -269,29 +275,68 @@ function PostedItemsTab() {
 
 // ─── Tab: Requested Items ──────────────────────────────────────────────────────
 function RequestedItemsTab() {
+  const navigate = useNavigate();
+  const { items, loading, error } = useRequestedItems();
+
+  if (loading) {
+    return <div className="text-center py-16 text-gray-400">Loading requested items...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-12">
+        <div className="flex flex-col items-center justify-center gap-3 text-center">
+          <svg
+            className="h-16 w-16 text-gray-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            />
+          </svg>
+          <p className="text-base font-medium text-gray-900">No requested items yet</p>
+          <p className="text-sm text-gray-500 max-w-sm">
+            When you request items from other users, they will appear here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Transform to format expected by ItemGrid
+  const listings = items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    category: item.category,
+    condition_level: item.condition_level,
+    city: item.city,
+    primary_image_url: item.primary_image_url,
+  }));
+
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-12">
-      <div className="flex flex-col items-center justify-center gap-3 text-center">
-        <svg
-          className="h-16 w-16 text-gray-300"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-          />
-        </svg>
-        <p className="text-base font-medium text-gray-900">No requested items yet</p>
-        <p className="text-sm text-gray-500 max-w-sm">
-          When you request items from other users, they will appear here.
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-6">
+        <p className="text-sm text-gray-600">
+          {items.length} item{items.length !== 1 ? "s" : ""} requested
         </p>
       </div>
-    </div>
+
+      <ItemGrid listings={listings} />
+    </main>
   );
 }
 

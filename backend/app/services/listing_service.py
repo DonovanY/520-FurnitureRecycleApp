@@ -44,16 +44,34 @@ class ListingService:
         page: int = 1,
         page_size: int = 12,
         q: str | None = None,
+        current_user: Optional[dict] = None,
     ):
         """
         Return paginated available listings for dashboard display.
+        If current_user is provided, includes request status for each listing.
         """
-        return get_available_listings_paginated(
+        from app.crud.request import get_requests_by_user
+        
+        result = get_available_listings_paginated(
             self.db,
             page=page,
             page_size=page_size,
             q=q,
         )
+        
+        # Build a map of listing_id -> request_status if user is authenticated
+        request_status_map = {}
+        if current_user:
+            user_id = current_user.get("sub")
+            if user_id:
+                user_requests = get_requests_by_user(self.db, user_id)
+                request_status_map = {
+                    str(req.listing_id): req.status for req in user_requests
+                }
+        
+        # Add request_status_map to result for response building
+        result["request_status_map"] = request_status_map
+        return result
 
     def get_listing_detail(
         self,
@@ -61,7 +79,7 @@ class ListingService:
         current_user: Optional[dict] = None,
     ):
         """
-        Return one listing plus the current user's request status for this listing, if any.
+        Return one listing plus the current user's request for this listing, if any.
         """
         listing = get_listing_by_id(self.db, listing_id)
         if not listing:
@@ -70,7 +88,7 @@ class ListingService:
                 detail="Listing not found",
             )
 
-        request_status = None
+        user_request = None
 
         if current_user:
             requester_user_id = current_user.get("sub")
@@ -81,9 +99,9 @@ class ListingService:
                     requester_user_id,
                 )
                 if existing_request:
-                    request_status = existing_request.status
+                    user_request = existing_request
 
-        return listing, request_status
+        return listing, user_request
 
     def request_item(
         self,

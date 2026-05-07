@@ -6,8 +6,7 @@ import { supabase } from "../lib/supabaseClient";
  * Supports pagination and optional search query.
  */
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
 
 /**
  * Fetch listings with pagination + optional search
@@ -25,11 +24,7 @@ const API_BASE_URL =
  *   total_pages: number
  * }>}
  */
-export async function fetchListings({
-  page = 1,
-  pageSize = 12,
-  search = "",
-} = {}) {
+export async function fetchListings({ page = 1, pageSize = 12, search = "" } = {}) {
   try {
     const params = new URLSearchParams();
 
@@ -42,11 +37,22 @@ export async function fetchListings({
 
     const url = `${API_BASE_URL}/api/v1/listings?${params.toString()}`;
 
+    // Get auth token if available
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`;
+    }
+
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
     });
 
     if (!response.ok) {

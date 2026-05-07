@@ -76,3 +76,46 @@ async def validate_token(authorization: str = Header(None)) -> dict:
             status_code=401,
             detail=f"Invalid or expired token: {exc}",
         )
+
+
+async def optional_validate_token(authorization: str = Header(None)) -> dict | None:
+    """
+    Optional authentication - returns user payload if valid token provided,
+    None if no token provided, raises HTTPException only if token is invalid.
+    """
+    if not authorization:
+        return None
+
+    if not authorization.startswith("Bearer "):
+        return None
+
+    token = authorization.split(" ", 1)[1].strip()
+
+    try:
+        unverified_header = jwt.get_unverified_header(token)
+    except JWTError:
+        return None
+
+    kid = unverified_header.get("kid")
+    alg = unverified_header.get("alg", "ES256")
+
+    if not kid:
+        return None
+
+    try:
+        jwks = _get_jwks()
+        keys = jwks.get("keys", [])
+
+        matching_key = next((key for key in keys if key.get("kid") == kid), None)
+        if not matching_key:
+            return None
+
+        payload = jwt.decode(
+            token,
+            matching_key,
+            algorithms=[alg],
+            options={"verify_aud": False},
+        )
+        return payload
+    except (JWTError, Exception):
+        return None

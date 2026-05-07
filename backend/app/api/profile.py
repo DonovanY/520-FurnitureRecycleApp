@@ -9,6 +9,7 @@ from app.schemas.profile import (
     LocationSchema,
     ItemSchema
 )
+from app.schemas.listing import RequestedItemsResponse, RequestedItemSummary
 from app.services.profile_listing_service import ProfileListingService
 
 router = APIRouter(prefix="/api/v1/profile", tags=["profile"])
@@ -73,5 +74,43 @@ def get_posted_listings(
         total=result["total"],
         total_pages=result["total_pages"],
     )
+
+
+@router.get("/requested_items", response_model=RequestedItemsResponse)
+def get_requested_items(
+    auth_user: dict = Depends(validate_token),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all items that the current user has requested.
+    Returns the listing details along with request status and message.
+    """
+    from app.crud.request import get_requests_by_user
+    
+    user_id = auth_user.get("sub")
+    
+    # Get all requests by this user
+    requests = get_requests_by_user(db, user_id)
+    
+    # Build response with listing details
+    items = []
+    for req in requests:
+        listing = req.listing
+        items.append(
+            RequestedItemSummary(
+                id=str(listing.id),
+                title=listing.title,
+                category=listing.category,
+                condition_level=listing.condition_level,
+                city=listing.city,
+                primary_image_url=get_primary_image_url(listing),
+                request_id=str(req.id),
+                request_status=req.status,
+                request_message=req.message,
+                requested_at=req.created_at,
+            )
+        )
+    
+    return RequestedItemsResponse(items=items)
 
 
