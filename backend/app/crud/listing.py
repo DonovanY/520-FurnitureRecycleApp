@@ -14,6 +14,7 @@ def get_listing_by_id(db: Session, listing_id: str):
             joinedload(Listing.poster),
             joinedload(Listing.requests),
             joinedload(Listing.images),
+            joinedload(Listing.location),
         )
         .filter(Listing.id == listing_id)
         .first()

@@ -71,7 +71,8 @@ def to_listing_summary_response(listing, request_status=None) -> ListingSummaryR
 
 def to_listing_detail_response(listing, user_request=None) -> ListingDetailResponse:
     from app.schemas.listing import UserRequestSummary
-    
+
+    loc = getattr(listing, "location", None)
     return ListingDetailResponse(
         id=str(listing.id),
         item=ItemSchema(
@@ -83,8 +84,14 @@ def to_listing_detail_response(listing, user_request=None) -> ListingDetailRespo
             category=listing.category,
         ),
         location=LocationSchema(
-            city=listing.city,
-            state=None,
+            address_line_1=loc.address_line_1 if loc else None,
+            address_line_2=loc.address_line_2 if loc else None,
+            city=loc.city if loc else listing.city,
+            state=loc.state if loc else None,
+            postal_code=loc.postal_code if loc else None,
+            country=loc.country if loc else None,
+            latitude=float(loc.latitude) if loc and loc.latitude is not None else None,
+            longitude=float(loc.longitude) if loc and loc.longitude is not None else None,
         ),
         primary_image_url=get_primary_image_url(listing),
         images=[
