@@ -161,14 +161,29 @@ function PostItemForm({
                 Enter item address
               </button>
             </div>
-            {locationChoice === "current" && (
-              <p className="text-xs text-gray-500 mt-1">
-                Your device's GPS will be used to pin the item on the map. The address will be detected automatically.
-              </p>
-            )}
           </FieldGroup>
 
-          {/* Manual address fields */}
+          {/* Current location — just ask for city as a fallback label */}
+          {locationChoice === "current" && (
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+              <p className="text-xs text-gray-500">
+                Your device's GPS will pin the item on the map and detect the address automatically.
+              </p>
+              <FieldGroup label="City" required>
+                <input
+                  className={inputClass}
+                  type="text"
+                  placeholder="e.g., Amherst, Northampton, Hadley"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-1">Used as a fallback if GPS is unavailable</p>
+              </FieldGroup>
+            </div>
+          )}
+
+          {/* Manual address fields — city is part of the block */}
           {locationChoice === "address" && (
             <div className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <FieldGroup label="Address Line 1">
@@ -187,6 +202,16 @@ function PostItemForm({
                   placeholder="e.g., Apt 4B (optional)"
                   value={addressLine2}
                   onChange={(e) => setAddressLine2(e.target.value)}
+                />
+              </FieldGroup>
+              <FieldGroup label="City" required>
+                <input
+                  className={inputClass}
+                  type="text"
+                  placeholder="e.g., Amherst"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  required
                 />
               </FieldGroup>
               <div className="grid grid-cols-2 gap-3">
@@ -220,18 +245,6 @@ function PostItemForm({
               </FieldGroup>
             </div>
           )}
-
-          <FieldGroup label="City" required>
-            <input
-              className={inputClass}
-              type="text"
-              placeholder="e.g., Amherst, Northampton, Hadley"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              required
-            />
-            <p className="text-xs text-gray-500 mt-1">Your city helps people find items nearby</p>
-          </FieldGroup>
 
           <FieldGroup label="Pickup Type">
             <select
