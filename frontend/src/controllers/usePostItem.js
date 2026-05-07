@@ -163,7 +163,7 @@ function usePostItem() {
 
       const result = await createListing(payload);
       setSuccess(true);
-      setTimeout(() => navigate(`/item/${result.id}`), 1000);
+      setTimeout(() => navigate(`/item/${result.id}`, { replace: true }), 1000);
     } catch (err) {
       setError(err.message || "Failed to create listing");
       setLoading(false);
