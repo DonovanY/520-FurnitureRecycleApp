@@ -5,8 +5,10 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from "../models/notificationModel";
+import { useAuth } from "../context/AuthContext";
 
 function NotificationBell() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -49,8 +51,8 @@ function NotificationBell() {
   }
 
   useEffect(() => {
-    loadUnreadCount();
-  }, []);
+    if (user) loadUnreadCount();
+  }, [user]);
 
   async function handleToggle() {
     const nextOpen = !open;
