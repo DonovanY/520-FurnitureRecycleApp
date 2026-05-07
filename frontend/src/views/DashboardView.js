@@ -1,9 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import SearchBar from "../components/SearchBar";
 import ItemGrid from "../components/ItemGrid";
 import useDashboard from "../controllers/useDashboard";
+import { useAuth } from "../context/AuthContext";
 
 function DashboardView() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     listings,
     searchQuery,
@@ -17,27 +21,39 @@ function DashboardView() {
     goToNextPage,
   } = useDashboard();
 
+  const handleCreateListing = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    navigate("/post");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Available Items</h1>
-          <p className="text-gray-500 mt-1">Find free furniture in your community.</p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Available Items</h1>
+            <p className="text-gray-500 mt-1">Find free furniture in your community.</p>
+          </div>
+          <button
+            onClick={handleCreateListing}
+            className="shrink-0 flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-all active:scale-95"
+          >
+            <span className="text-lg">+</span> Create Listing
+          </button>
         </div>
 
         <div className="mb-6 max-w-md">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        {error && (
-          <div className="text-red-600 text-center py-8">{error}</div>
-        )}
+        {error && <div className="text-red-600 text-center py-8">{error}</div>}
 
-        {!error && loading && (
-          <div className="text-center py-16 text-gray-400">Loading...</div>
-        )}
+        {!error && loading && <div className="text-center py-16 text-gray-400">Loading...</div>}
 
         {!error && !loading && (
           <>

@@ -15,6 +15,7 @@ class Listing(Base):
     origin_type = Column(String, nullable=False)
     status = Column(String, nullable=False)
 
+    pickup_type = Column(String, nullable=True)
     pickup_notes = Column(Text, nullable=True)
     visible_from = Column(DateTime(timezone=True), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
