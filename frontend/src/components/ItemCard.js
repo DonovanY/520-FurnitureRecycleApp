@@ -37,6 +37,14 @@ function ItemCard({ listing }) {
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${condition.classes}`}>
             {condition.label}
           </span>
+
+          {listing.request_status_for_current_user && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+              {listing.request_status_for_current_user === "pending" && "Requested"}
+              {listing.request_status_for_current_user === "accepted" && "Accepted"}
+              {listing.request_status_for_current_user === "rejected" && "Rejected"}
+            </span>
+          )}
         </div>
 
         {listing.city && (
