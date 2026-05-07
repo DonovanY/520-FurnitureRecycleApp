@@ -68,7 +68,7 @@ function ItemCard({ listing }) {
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span className="leading-snug">
+            <span className="leading-snug line-clamp-1">
               {listing.address_line_1 ? (
                 <>
                   {listing.address_line_1}
