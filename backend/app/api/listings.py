@@ -42,6 +42,7 @@ def get_primary_image_url(listing):
 
 
 def to_listing_summary_response(listing, request_status=None) -> ListingSummaryResponse:
+    loc = getattr(listing, "location", None)
     return ListingSummaryResponse(
         id=str(listing.id),
         item=ItemSchema(
@@ -55,6 +56,8 @@ def to_listing_summary_response(listing, request_status=None) -> ListingSummaryR
         location=LocationSchema(
             city=listing.city,
             state=None,
+            latitude=float(loc.latitude) if loc and loc.latitude is not None else None,
+            longitude=float(loc.longitude) if loc and loc.longitude is not None else None,
         ),
         primary_image_url=get_primary_image_url(listing),
         created_at=listing.created_at,
@@ -160,6 +163,8 @@ def create_listing(
         user_id=user_id,
         payload=payload.model_dump(),
         image_url=payload.image_url,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
     )
     
     return CreateListingResponse(id=str(listing.id))
