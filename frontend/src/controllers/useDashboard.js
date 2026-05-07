@@ -47,6 +47,8 @@ function useDashboard() {
           status: listing.item?.status ?? "",
           city: listing.location?.city ?? "",
           state: listing.location?.state ?? "",
+          latitude: listing.location?.latitude ?? null,
+          longitude: listing.location?.longitude ?? null,
           primary_image_url: listing.primary_image_url ?? null,
           created_at: listing.created_at,
         }));
