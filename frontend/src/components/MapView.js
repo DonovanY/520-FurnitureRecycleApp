@@ -124,7 +124,7 @@ function FitBoundsOnChange({ markers }) {
 
     const bounds = L.latLngBounds(markers.map((m) => [m.lat, m.lng]));
     if (!map.getBounds().intersects(bounds)) {
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: DEFAULT_ZOOM });
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: DEFAULT_ZOOM, animate: false });
     }
   }, [map, markers]);
 
@@ -172,8 +172,12 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
     setGeocoding(true);
 
     async function geocodeAll() {
-      const uniqueCities = [...new Set(listings.map((l) => l.city).filter(Boolean))];
+      // Split into exact-coord listings and city-only listings
+      const exact = listings.filter((l) => l.latitude && l.longitude);
+      const cityOnly = listings.filter((l) => !(l.latitude && l.longitude) && l.city);
 
+      // Geocode only the cities we actually need
+      const uniqueCities = [...new Set(cityOnly.map((l) => l.city))];
       const cityCoords = {};
       for (const city of uniqueCities) {
         if (cancelled) return;
@@ -183,8 +187,14 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
 
       if (cancelled) return;
 
-      const built = listings
-        .filter((l) => l.city && cityCoords[l.city])
+      const exactMarkers = exact.map((l) => ({
+        listing: l,
+        lat: l.latitude,
+        lng: l.longitude,
+      }));
+
+      const cityMarkers = cityOnly
+        .filter((l) => cityCoords[l.city])
         .map((l) => {
           const { lat, lng } = jitter(l.id);
           return {
@@ -194,7 +204,7 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
           };
         });
 
-      setMarkers(built);
+      setMarkers([...exactMarkers, ...cityMarkers]);
       setGeocoding(false);
     }
 
