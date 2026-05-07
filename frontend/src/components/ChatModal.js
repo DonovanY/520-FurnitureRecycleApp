@@ -24,10 +24,10 @@ function ChatModal({
 
   useEffect(() => {
     loadConversation();
-    // Poll for new messages every 5 seconds
-    const interval = setInterval(loadConversation, 5000);
-    return () => clearInterval(interval);
-  }, [listingId]);
+    // Only poll if no error (prevents retrying on validation errors)
+    const interval = !error ? setInterval(loadConversation, 5000) : null;
+    return () => interval && clearInterval(interval);
+  }, [listingId, error]);
 
   useEffect(() => {
     scrollToBottom();
