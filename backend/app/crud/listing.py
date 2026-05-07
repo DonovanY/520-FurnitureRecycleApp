@@ -147,7 +147,12 @@ def create_listing(db: Session, user_id: str, payload: dict, image_url: str | No
             id=str(uuid.uuid4()),
             latitude=latitude,
             longitude=longitude,
+            address_line_1=payload.get("address_line_1"),
+            address_line_2=payload.get("address_line_2"),
             city=payload.get("city"),
+            state=payload.get("state"),
+            postal_code=payload.get("postal_code"),
+            country=payload.get("country"),
         )
         db.add(location)
         db.flush()

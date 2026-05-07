@@ -54,8 +54,12 @@ def to_listing_summary_response(listing, request_status=None) -> ListingSummaryR
             category=listing.category,
         ),
         location=LocationSchema(
-            city=listing.city,
-            state=None,
+            address_line_1=loc.address_line_1 if loc else None,
+            address_line_2=loc.address_line_2 if loc else None,
+            city=loc.city if loc else listing.city,
+            state=loc.state if loc else None,
+            postal_code=loc.postal_code if loc else None,
+            country=loc.country if loc else None,
             latitude=float(loc.latitude) if loc and loc.latitude is not None else None,
             longitude=float(loc.longitude) if loc and loc.longitude is not None else None,
         ),
@@ -166,6 +170,8 @@ def create_listing(
         latitude=payload.latitude,
         longitude=payload.longitude,
     )
+    # Note: address fields (address_line_1/2, state, postal_code, country) are
+    # already in payload.model_dump() and read directly by create_listing_crud
     
     return CreateListingResponse(id=str(listing.id))
 
