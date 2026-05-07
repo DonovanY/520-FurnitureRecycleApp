@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import ChatModal from "../components/ChatModal";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 function DetailMetaRow({ label, value }) {
@@ -23,6 +23,7 @@ function ListingDetailView({
   requestSuccess,
   handleRequestItem,
 }) {
+  const navigate = useNavigate();
   const [chatOpen, setChatOpen] = useState(false);
 
   return (
@@ -42,12 +43,12 @@ function ListingDetailView({
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-6">
-            <Link
-              to="/"
+            <button
+              onClick={() => navigate(-1)}
               className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
-              ← Back to Listings
-            </Link>
+              ← Back
+            </button>
           </div>
 
           {loading && <div className="text-center py-20 text-gray-400">Loading listing...</div>}
