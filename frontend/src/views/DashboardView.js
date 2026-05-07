@@ -40,6 +40,8 @@ function DashboardView() {
   } = useDashboard();
 
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "map"
+  const [visibleListings, setVisibleListings] = useState([]);
+  const [selectedListingId, setSelectedListingId] = useState(null);
   const isMapMode = viewMode === "map";
 
   return (
@@ -100,21 +102,32 @@ function DashboardView() {
           <>
             {isMapMode ? (
               <>
-                <MapView listings={listings} />
+                <MapView
+                  listings={listings}
+                  onVisibleChange={(next) => {
+                    setVisibleListings(next);
+                    setSelectedListingId((prev) =>
+                      next.some((l) => l.id === prev) ? prev : null
+                    );
+                  }}
+                  onSelectListing={setSelectedListingId}
+                />
 
                 <div className="mt-6">
                   <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                    Items on this page
+                    {visibleListings.length > 0
+                      ? `${visibleListings.length} item${visibleListings.length === 1 ? "" : "s"} in this area`
+                      : "No items in this area — try panning or zooming out"}
                   </h2>
-                  <ItemScrollRow listings={listings} />
+                  <ItemScrollRow listings={visibleListings} selectedId={selectedListingId} />
                 </div>
               </>
             ) : (
               <ItemGrid listings={listings} />
             )}
 
-            {/* Pagination — shown in both modes */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Pagination — grid mode only */}
+            {!isMapMode && <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-gray-500">
                 Page {page} of {totalPages} · {total} items
               </div>
@@ -138,7 +151,7 @@ function DashboardView() {
                   Next
                 </button>
               </div>
-            </div>
+            </div>}
           </>
         )}
       </main>
