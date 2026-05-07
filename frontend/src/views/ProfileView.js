@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import useProfile from "../controllers/useProfile";
 import SearchBar from "../components/SearchBar";
@@ -190,6 +191,7 @@ function ProfileSettingsTab({
 
 // ─── Tab: Posted Items ─────────────────────────────────────────────────────────
 function PostedItemsTab() {
+  const navigate = useNavigate();
   const {
     listings,
     searchQuery,
@@ -210,7 +212,10 @@ function PostedItemsTab() {
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        <button className="shrink-0 flex items-center gap-2 rounded-lg border border-green-600 bg-white px-5 py-2.5 text-sm font-semibold text-green-600 shadow-sm hover:bg-green-50 transition-all active:scale-95">
+        <button
+          onClick={() => navigate("/post")}
+          className="shrink-0 flex items-center gap-2 rounded-lg border border-green-600 bg-white px-5 py-2.5 text-sm font-semibold text-green-600 shadow-sm hover:bg-green-50 transition-all active:scale-95"
+        >
           <span className="text-lg">+</span> Add New Item
         </button>
       </div>
@@ -263,52 +268,29 @@ function PostedItemsTab() {
 }
 
 // ─── Tab: Requested Items ──────────────────────────────────────────────────────
-const MOCK_REQUESTED = [
-  { id: 1, title: "Road Bicycle", category: "Sports", date: "2024-03-18", status: "Pending" },
-  { id: 2, title: "Standing Desk", category: "Furniture", date: "2024-03-05", status: "Fulfilled" },
-];
-
 function RequestedItemsTab() {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
-          <tr>
-            {["Title", "Category", "Date Requested", "Status", ""].map((h) => (
-              <th
-                key={h}
-                className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {MOCK_REQUESTED.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 font-medium text-gray-900">{item.title}</td>
-              <td className="px-6 py-4 text-gray-500">{item.category}</td>
-              <td className="px-6 py-4 text-gray-500">{item.date}</td>
-              <td className="px-6 py-4">
-                <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${item.status === "Fulfilled" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
-                >
-                  {item.status}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-right">
-                <button className="text-xs font-medium text-green-600 hover:text-green-800">
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {MOCK_REQUESTED.length === 0 && (
-        <p className="px-6 py-12 text-center text-sm text-gray-400">No requested items yet.</p>
-      )}
+    <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-12">
+      <div className="flex flex-col items-center justify-center gap-3 text-center">
+        <svg
+          className="h-16 w-16 text-gray-300"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          />
+        </svg>
+        <p className="text-base font-medium text-gray-900">No requested items yet</p>
+        <p className="text-sm text-gray-500 max-w-sm">
+          When you request items from other users, they will appear here.
+        </p>
+      </div>
     </div>
   );
 }

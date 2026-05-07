@@ -31,14 +31,10 @@ function ItemCard({ listing }) {
       </div>
 
       <div className="p-4">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
-          {listing.title}
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{listing.title}</h3>
 
         <div className="flex flex-wrap gap-2 mb-3">
-          <span
-            className={`text-xs font-medium px-2 py-1 rounded-full ${condition.classes}`}
-          >
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${condition.classes}`}>
             {condition.label}
           </span>
         </div>

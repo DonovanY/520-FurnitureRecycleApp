@@ -65,3 +65,18 @@ class ItemRequestResponse(BaseModel):
     status: str
     created_at: datetime
 
+class CreateListingPayload(BaseModel):
+    title: str
+    category: str
+    condition_level: str
+    origin_type: str
+    city: str
+    description: Optional[str] = None
+    pickup_type: Optional[str] = None
+    pickup_notes: Optional[str] = None
+    image_url: Optional[str] = None
+
+class CreateListingResponse(BaseModel):
+    id: str
+    message: str = "Listing created successfully"
+
