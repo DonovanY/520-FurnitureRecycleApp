@@ -106,12 +106,23 @@ function NotificationBell() {
       <button
         type="button"
         onClick={handleToggle}
-        className="relative p-2 rounded-full hover:bg-gray-100"
+        className="relative p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        aria-label="Notifications"
       >
-        <span className="text-xl">🔔</span>
+        {/* Bell SVG */}
+        <svg
+          className="w-6 h-6"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 0 0-2 0v1.09A6 6 0 0 0 6 11v5l-1.29 1.29A1 1 0 0 0 5 19h14a1 1 0 0 0 .71-1.71L18 16z" />
+        </svg>
+
+        {/* Red badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] flex items-center justify-center">
-            {unreadCount}
+          <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
