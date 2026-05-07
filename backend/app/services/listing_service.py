@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.crud.listing import get_listing_by_id, get_available_listings_paginated
+from app.crud.listing import get_listing_by_id, get_available_listings_paginated, update_listing as crud_update_listing
 from app.crud.request import get_request_by_listing_and_user, create_item_request
 from app.crud.profile import get_profile_by_id, create_profile
 from app.models.profile import Profile
@@ -160,3 +160,31 @@ class ListingService:
         )
 
         return create_item_request(self.db, request_obj)
+
+    def update_listing(
+        self,
+        listing_id: str,
+        current_user: dict,
+        payload: dict,
+    ):
+        """
+        Apply a partial update to a listing.
+
+        Only the listing's poster may edit it. payload should already be
+        filtered to fields the caller intends to set (use Pydantic's
+        model_dump(exclude_unset=True) at the route layer).
+        """
+        listing = get_listing_by_id(self.db, listing_id)
+        if not listing:
+            raise HTTPException(
+                status_code=404,
+                detail="Listing not found",
+            )
+
+        if str(listing.poster_user_id) != current_user.get("sub"):
+            raise HTTPException(
+                status_code=403,
+                detail="Only the poster can edit this listing",
+            )
+
+        return crud_update_listing(self.db, listing_id, payload)

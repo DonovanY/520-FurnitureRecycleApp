@@ -197,3 +197,48 @@ def update_listing_status(db: Session, listing_id: str, status: str):
         db.commit()
         db.refresh(listing)
     return listing
+
+
+LISTING_FIELDS = {"title", "description", "category", "condition_level", "origin_type", "city", "pickup_type", "pickup_notes"}
+LOCATION_FIELDS = {"latitude", "longitude", "address_line_1", "address_line_2", "city", "state", "postal_code", "country"}
+
+
+def update_listing(db: Session, listing_id: str, payload: dict):
+    """
+    Apply a partial update to a listing.
+
+    payload should already be filtered to the fields the caller intends to set
+    (e.g. via Pydantic's model_dump(exclude_unset=True)).
+
+    Listing-level fields are written to the listing row. Location-level fields
+    update the associated locations row, creating one if the listing has none.
+    """
+    listing = get_listing_by_id(db, listing_id)
+    if not listing:
+        return None
+
+    for field in LISTING_FIELDS & payload.keys():
+        setattr(listing, field, payload[field])
+
+    location_updates = {f: payload[f] for f in LOCATION_FIELDS if f in payload}
+    if location_updates:
+        if listing.location_id:
+            location = db.query(Location).filter(Location.id == listing.location_id).first()
+        else:
+            location = None
+
+        if location is None:
+            location = Location(
+                id=str(uuid.uuid4()),
+                **location_updates,
+            )
+            db.add(location)
+            db.flush()
+            listing.location_id = location.id
+        else:
+            for field, value in location_updates.items():
+                setattr(location, field, value)
+
+    db.commit()
+    db.refresh(listing)
+    return listing

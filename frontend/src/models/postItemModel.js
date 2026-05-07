@@ -24,6 +24,37 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:800
  *
  * @returns {Promise<{ id: string, message: string }>}
  */
+export async function updateListing(id, data) {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      throw new Error("You must be logged in to edit a listing");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/listings/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to update listing: ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("updateListing error:", error);
+    throw error;
+  }
+}
+
 export async function createListing(data) {
   try {
     // Get auth token

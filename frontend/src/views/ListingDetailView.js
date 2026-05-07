@@ -1,7 +1,8 @@
 import Navbar from "../components/Navbar";
 import ChatModal from "../components/ChatModal";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 function DetailMetaRow({ label, value }) {
   return (
@@ -25,6 +26,8 @@ function ListingDetailView({
 }) {
   const navigate = useNavigate();
   const [chatOpen, setChatOpen] = useState(false);
+  const { user } = useAuth();
+  const isOwner = !!user && !!listing?.owner?.id && user.id === listing.owner.id;
 
   return (
     <>
@@ -185,7 +188,23 @@ function ListingDetailView({
                     )}
 
                     <div className="pt-6">
-                      {listing.user_request ? (
+                      {isOwner ? (
+                        // Owner: show manage card instead of request form
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900 mb-3">Manage Your Listing</h2>
+                          <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                            <p className="text-sm text-gray-500 mb-4">
+                              This is your listing. Requests from interested users appear in your profile under Posted Items.
+                            </p>
+                            <Link
+                              to={`/post?edit=${listing.id}`}
+                              className="inline-flex items-center justify-center rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-6 py-3 transition-colors"
+                            >
+                              Edit Listing
+                            </Link>
+                          </div>
+                        </div>
+                      ) : listing.user_request ? (
                         // User has already requested this item
                         <div>
                           <h2 className="text-lg font-semibold text-gray-900 mb-3">Your Request</h2>
@@ -286,6 +305,7 @@ function ListingDetailView({
               </div>
             </div>
           )}
+
         </main>
       </div>
     </>

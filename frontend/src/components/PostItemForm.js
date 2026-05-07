@@ -40,13 +40,14 @@ function PostItemForm({
   country, setCountry,
   loading, error, success,
   handleSubmit,
+  isEdit,
 }) {
   return (
     <form onSubmit={handleSubmit}>
       {error && <div className="mb-6 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
       {success && !error && (
         <div className="mb-6 rounded-md bg-green-50 p-3 text-sm text-green-700">
-          Listing created successfully! Redirecting...
+          {isEdit ? "Listing updated successfully! Redirecting..." : "Listing created successfully! Redirecting..."}
         </div>
       )}
 
@@ -332,7 +333,7 @@ function PostItemForm({
           disabled={loading}
           className="rounded-lg bg-green-600 px-8 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-green-700 disabled:opacity-60 transition-colors"
         >
-          {loading ? "Creating..." : "Create Listing"}
+          {loading ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save Changes" : "Create Listing")}
         </button>
       </div>
     </form>

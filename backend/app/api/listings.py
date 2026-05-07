@@ -18,6 +18,7 @@ from app.schemas.listing import (
     CreateListingPayload,
     CreateListingResponse,
     ListingRequestsResponse,
+    UpdateListingPayload,
 )
 from app.services.listing_service import ListingService
 
@@ -192,6 +193,26 @@ def get_listing_detail(
     service = ListingService(db)
     listing, user_request = service.get_listing_detail(listing_id, current_user=auth_user)
     return to_listing_detail_response(listing, user_request)
+
+
+@router.patch("/{listing_id}", response_model=ListingDetailResponse)
+def update_listing_route(
+    listing_id: str,
+    payload: UpdateListingPayload,
+    auth_user: dict = Depends(validate_token),
+    db: Session = Depends(get_db),
+):
+    """
+    Partial update of a listing. Only the poster may edit.
+    """
+    service = ListingService(db)
+    listing = service.update_listing(
+        listing_id,
+        auth_user,
+        payload.model_dump(exclude_unset=True),
+    )
+    # Owners can't request their own listing, so user_request is always None here.
+    return to_listing_detail_response(listing, user_request=None)
 
 
 @router.post("/{listing_id}/request", response_model=ItemRequestResponse)
