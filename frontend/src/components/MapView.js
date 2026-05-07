@@ -46,38 +46,6 @@ const userLocationIcon = L.divIcon({
 
 const DEFAULT_ZOOM = 14;
 
-// Module-level geocode cache — survives re-renders
-const geocodeCache = {};
-
-async function geocodeCity(city) {
-  if (city in geocodeCache) return geocodeCache[city];
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
-      { headers: { "Accept-Language": "en" } }
-    );
-    const data = await res.json();
-    const result = data[0]
-      ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
-      : null;
-    geocodeCache[city] = result;
-    return result;
-  } catch {
-    geocodeCache[city] = null;
-    return null;
-  }
-}
-
-// Deterministic per-listing jitter so same-city items don't stack on one pin
-function jitter(id) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
-  return {
-    lat: ((h & 0xffff) / 0xffff - 0.5) * 0.004,
-    lng: (((h >>> 16) & 0xffff) / 0xffff - 0.5) * 0.004,
-  };
-}
-
 // Flies to the user's location once coordinates arrive
 function LocationSetter({ userLocation }) {
   const map = useMap();
@@ -103,7 +71,6 @@ function BoundsTracker({ markers, onVisibleChange }) {
 
   useMapEvents({ moveend: updateVisible, zoomend: updateVisible });
 
-  // Re-run whenever the geocoded marker set changes
   useEffect(() => {
     updateVisible();
   }, [updateVisible]);
@@ -119,7 +86,7 @@ function FitBoundsOnChange({ markers }) {
   useEffect(() => {
     if (!markers.length) return;
     const key = markers.map((m) => m.listing.id).sort().join(",");
-    if (key === prevKeyRef.current) return; // same set — user just panned, don't interfere
+    if (key === prevKeyRef.current) return;
     prevKeyRef.current = key;
 
     const bounds = L.latLngBounds(markers.map((m) => [m.lat, m.lng]));
@@ -141,7 +108,6 @@ const CONDITION_LABEL = {
 // Geolocation states: "pending" | "granted" | "denied"
 export default function MapView({ listings, onVisibleChange, onSelectListing }) {
   const [markers, setMarkers] = useState([]);
-  const [geocoding, setGeocoding] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [geoStatus, setGeoStatus] = useState("pending"); // pending | granted | denied
 
@@ -161,55 +127,12 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
     );
   }, []);
 
-  // Geocode city names whenever listings change
+  // Build markers from listings that have exact coordinates
   useEffect(() => {
-    if (!listings.length) {
-      setMarkers([]);
-      return;
-    }
-
-    let cancelled = false;
-    setGeocoding(true);
-
-    async function geocodeAll() {
-      // Split into exact-coord listings and city-only listings
-      const exact = listings.filter((l) => l.latitude && l.longitude);
-      const cityOnly = listings.filter((l) => !(l.latitude && l.longitude) && l.city);
-
-      // Geocode only the cities we actually need
-      const uniqueCities = [...new Set(cityOnly.map((l) => l.city))];
-      const cityCoords = {};
-      for (const city of uniqueCities) {
-        if (cancelled) return;
-        cityCoords[city] = await geocodeCity(city);
-        await new Promise((r) => setTimeout(r, 250)); // Nominatim rate limit
-      }
-
-      if (cancelled) return;
-
-      const exactMarkers = exact.map((l) => ({
-        listing: l,
-        lat: l.latitude,
-        lng: l.longitude,
-      }));
-
-      const cityMarkers = cityOnly
-        .filter((l) => cityCoords[l.city])
-        .map((l) => {
-          const { lat, lng } = jitter(l.id);
-          return {
-            listing: l,
-            lat: cityCoords[l.city].lat + lat,
-            lng: cityCoords[l.city].lng + lng,
-          };
-        });
-
-      setMarkers([...exactMarkers, ...cityMarkers]);
-      setGeocoding(false);
-    }
-
-    geocodeAll();
-    return () => { cancelled = true; };
+    const built = listings
+      .filter((l) => l.latitude && l.longitude)
+      .map((l) => ({ listing: l, lat: l.latitude, lng: l.longitude }));
+    setMarkers(built);
   }, [listings]);
 
   // While waiting for browser geolocation response, show a prompt screen
@@ -240,9 +163,7 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
   );
 
   // Initial center: user location if granted, otherwise a neutral low-zoom world view
-  const initCenter = userLocation
-    ? [userLocation.lat, userLocation.lng]
-    : [20, 0];
+  const initCenter = userLocation ? [userLocation.lat, userLocation.lng] : [20, 0];
   const initZoom = userLocation ? DEFAULT_ZOOM : 2;
 
   return (
@@ -251,12 +172,6 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
       style={{ height: 420 }}
     >
       {deniedBanner}
-
-      {geocoding && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[1000] bg-white/90 backdrop-blur-sm text-xs text-gray-500 px-3 py-1.5 rounded-full shadow-md">
-          Loading markers…
-        </div>
-      )}
 
       <MapContainer
         center={initCenter}
@@ -269,20 +184,15 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Smooth fly-to once location arrives */}
         {userLocation && <LocationSetter userLocation={userLocation} />}
 
-        {/* Blue dot at user's position */}
         {userLocation && (
           <Marker position={[userLocation.lat, userLocation.lng]} icon={userLocationIcon}>
             <Popup>You are here</Popup>
           </Marker>
         )}
 
-        {/* Keeps scroll list in sync with the visible map area */}
         <BoundsTracker markers={markers} onVisibleChange={onVisibleChange} />
-
-        {/* Pan to show markers when search changes the result set */}
         <FitBoundsOnChange markers={markers} />
 
         {markers.map(({ listing, lat, lng }) => (
