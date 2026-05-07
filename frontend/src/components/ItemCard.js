@@ -47,10 +47,10 @@ function ItemCard({ listing }) {
           )}
         </div>
 
-        {listing.city && (
-          <div className="flex items-center text-gray-500 text-sm">
+        {(listing.address_line_1 || listing.city) && (
+          <div className="flex items-start text-gray-500 text-sm">
             <svg
-              className="w-4 h-4 mr-1 flex-shrink-0"
+              className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -68,9 +68,20 @@ function ItemCard({ listing }) {
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span>
-              {listing.city}
-              {listing.state ? `, ${listing.state}` : ""}
+            <span className="leading-snug">
+              {listing.address_line_1 ? (
+                <>
+                  {listing.address_line_1}
+                  {listing.address_line_2 && `, ${listing.address_line_2}`}
+                  {listing.city && `, ${listing.city}`}
+                  {listing.state && `, ${listing.state}`}
+                </>
+              ) : (
+                <>
+                  {listing.city}
+                  {listing.state ? `, ${listing.state}` : ""}
+                </>
+              )}
             </span>
           </div>
         )}
