@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createListing } from "../models/postItemModel";
+import { createListing, updateListing } from "../models/postItemModel";
 import { useAuth } from "../context/AuthContext";
 
 async function reverseGeocode(lat, lng) {
@@ -41,28 +41,32 @@ async function forwardGeocode(addressLine1, addressLine2, city, state, postalCod
   }
 }
 
-function usePostItem() {
+function usePostItem({ initialData = null, listingId = null } = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const loc = initialData?.location ?? {};
+  const item = initialData?.item ?? {};
+
   // Basic fields
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [conditionLevel, setConditionLevel] = useState("");
-  const [originType, setOriginType] = useState("");
-  const [city, setCity] = useState("");
-  const [description, setDescription] = useState("");
-  const [pickupType, setPickupType] = useState("");
-  const [pickupNotes, setPickupNotes] = useState("");
+  const [title, setTitle] = useState(item.title ?? "");
+  const [category, setCategory] = useState(item.category ?? "");
+  const [conditionLevel, setConditionLevel] = useState(item.condition_level ?? "");
+  const [originType, setOriginType] = useState(item.origin_type ?? "");
+  const [city, setCity] = useState(loc.city ?? "");
+  const [description, setDescription] = useState(item.description ?? "");
+  const [pickupType, setPickupType] = useState(initialData?.pickup_type ?? "");
+  const [pickupNotes, setPickupNotes] = useState(initialData?.pickup_notes ?? "");
   const [imageUrl, setImageUrl] = useState("");
 
   // Location choice: "current" | "address"
-  const [locationChoice, setLocationChoice] = useState("current");
-  const [addressLine1, setAddressLine1] = useState("");
-  const [addressLine2, setAddressLine2] = useState("");
-  const [addressState, setAddressState] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("");
+  // Default to "address" in edit mode so we don't silently re-grab GPS
+  const [locationChoice, setLocationChoice] = useState(initialData ? "address" : "current");
+  const [addressLine1, setAddressLine1] = useState(loc.address_line_1 ?? "");
+  const [addressLine2, setAddressLine2] = useState(loc.address_line_2 ?? "");
+  const [addressState, setAddressState] = useState(loc.state ?? "");
+  const [postalCode, setPostalCode] = useState(loc.postal_code ?? "");
+  const [country, setCountry] = useState(loc.country ?? "");
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -161,9 +165,12 @@ function usePostItem() {
         ...locationFields,
       };
 
-      const result = await createListing(payload);
+      const isEdit = !!listingId;
+      const result = isEdit
+        ? await updateListing(listingId, payload)
+        : await createListing(payload);
       setSuccess(true);
-      setTimeout(() => navigate(`/item/${result.id}`, { replace: true }), 1000);
+      setTimeout(() => navigate(`/item/${result.id ?? listingId}`, { replace: true }), 1000);
     } catch (err) {
       setError(err.message || "Failed to create listing");
       setLoading(false);
