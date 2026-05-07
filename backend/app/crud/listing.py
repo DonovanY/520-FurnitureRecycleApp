@@ -163,3 +163,12 @@ def create_listing(db: Session, user_id: str, payload: dict, image_url: str | No
     db.refresh(listing)
     
     return listing
+
+def update_listing_status(db: Session, listing_id: str, status: str):
+    """Update the status of a listing"""
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if listing:
+        listing.status = status
+        db.commit()
+        db.refresh(listing)
+    return listing

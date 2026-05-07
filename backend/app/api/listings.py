@@ -1,8 +1,9 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.middleware.security import validate_token
+from app.middleware.security import validate_token, optional_validate_token
 from app.schemas.listing import (
     ListingListResponse,
     ListingSummaryResponse,
@@ -16,6 +17,7 @@ from app.schemas.listing import (
     ListingImageSchema,
     CreateListingPayload,
     CreateListingResponse,
+    ListingRequestsResponse,
 )
 from app.services.listing_service import ListingService
 
@@ -39,7 +41,7 @@ def get_primary_image_url(listing):
     return listing.images[0].public_url
 
 
-def to_listing_summary_response(listing) -> ListingSummaryResponse:
+def to_listing_summary_response(listing, request_status=None) -> ListingSummaryResponse:
     return ListingSummaryResponse(
         id=str(listing.id),
         item=ItemSchema(
@@ -56,10 +58,13 @@ def to_listing_summary_response(listing) -> ListingSummaryResponse:
         ),
         primary_image_url=get_primary_image_url(listing),
         created_at=listing.created_at,
+        request_status_for_current_user=request_status,
     )
 
 
-def to_listing_detail_response(listing, request_status_for_current_user=None) -> ListingDetailResponse:
+def to_listing_detail_response(listing, user_request=None) -> ListingDetailResponse:
+    from app.schemas.listing import UserRequestSummary
+    
     return ListingDetailResponse(
         id=str(listing.id),
         item=ItemSchema(
@@ -91,7 +96,15 @@ def to_listing_detail_response(listing, request_status_for_current_user=None) ->
             full_name=listing.poster.full_name,
         ),
         created_at=listing.created_at,
-        request_status_for_current_user=request_status_for_current_user,
+        request_status_for_current_user=user_request.status if user_request else None,
+        user_request=UserRequestSummary(
+            id=str(user_request.id),
+            message=user_request.message,
+            status=user_request.status,
+            created_at=user_request.created_at,
+        ) if user_request else None,
+        pickup_type=listing.pickup_type,
+        pickup_notes=listing.pickup_notes,
     )
 
 
@@ -100,13 +113,27 @@ def get_listings(
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=50),
     q: str | None = Query(None),
+    auth_user: Optional[dict] = Depends(optional_validate_token),
     db: Session = Depends(get_db),
 ):
     service = ListingService(db)
-    result = service.list_listings(page=page, page_size=page_size, q=q)
+    result = service.list_listings(
+        page=page,
+        page_size=page_size,
+        q=q,
+        current_user=auth_user,
+    )
+
+    request_status_map = result.get("request_status_map", {})
 
     return ListingListResponse(
-        items=[to_listing_summary_response(listing) for listing in result["items"]],
+        items=[
+            to_listing_summary_response(
+                listing,
+                request_status=request_status_map.get(str(listing.id))
+            )
+            for listing in result["items"]
+        ],
         page=result["page"],
         page_size=result["page_size"],
         total=result["total"],
@@ -141,11 +168,12 @@ def create_listing(
 @router.get("/{listing_id}", response_model=ListingDetailResponse)
 def get_listing_detail(
     listing_id: str,
+    auth_user: Optional[dict] = Depends(optional_validate_token),
     db: Session = Depends(get_db),
 ):
     service = ListingService(db)
-    listing, request_status = service.get_listing_detail(listing_id)
-    return to_listing_detail_response(listing, request_status)
+    listing, user_request = service.get_listing_detail(listing_id, current_user=auth_user)
+    return to_listing_detail_response(listing, user_request)
 
 
 @router.post("/{listing_id}/request", response_model=ItemRequestResponse)
@@ -169,3 +197,54 @@ def request_listing(
         status=request_obj.status,
         created_at=request_obj.created_at,
     )
+
+
+@router.get("/{listing_id}/requests", response_model=ListingRequestsResponse)
+def get_listing_requests(
+    listing_id: str,
+    auth_user: dict = Depends(validate_token),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all requests for a specific listing.
+    Only the poster can view requests for their listing.
+    """
+    from app.crud.listing import get_listing_by_id
+    from app.crud.request import get_requests_for_listing
+    from app.models.profile import Profile
+    
+    user_id = auth_user.get("sub")
+    
+    # Verify the listing exists and user is the poster
+    listing = get_listing_by_id(db, listing_id)
+    if not listing:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Listing not found")
+    
+    if str(listing.poster_user_id) != user_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Only the poster can view requests")
+    
+    # Get all requests with requester details
+    requests = get_requests_for_listing(db, listing_id)
+    
+    # Build response
+    request_responses = []
+    for req in requests:
+        requester = db.query(Profile).filter(Profile.id == req.requester_user_id).first()
+        request_responses.append(
+            ItemRequestResponse(
+                id=str(req.id),
+                listing_id=str(req.listing_id),
+                requester=RequesterSummary(
+                    id=str(requester.id),
+                    email=requester.email,
+                    full_name=requester.full_name,
+                ),
+                message=req.message,
+                status=req.status,
+                created_at=req.created_at,
+            )
+        )
+    
+    return ListingRequestsResponse(requests=request_responses)
