@@ -6,6 +6,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import user, listings, profile
 from app.api.notifications import router as notifications_router
+from app.api.requests import router as requests_router
+from app.api.messages import router as messages_router
 
 app = FastAPI(title="FurnitureRecycle Backend", version="1.0.0")
 
@@ -21,6 +23,8 @@ app.include_router(user.router)
 app.include_router(listings.router)
 app.include_router(notifications_router)
 app.include_router(profile.router)
+app.include_router(requests_router, prefix="/api/v1", tags=["requests"])
+app.include_router(messages_router, prefix="/api/v1", tags=["messages"])
 
 @app.get("/health")
 def health_check():
