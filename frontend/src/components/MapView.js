@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import { Link } from "react-router-dom";
 import L from "leaflet";
@@ -107,6 +107,26 @@ function BoundsTracker({ markers, onVisibleChange }) {
   useEffect(() => {
     updateVisible();
   }, [updateVisible]);
+
+  return null;
+}
+
+// When the search changes the listing set, pan to fit any off-screen markers
+function FitBoundsOnChange({ markers }) {
+  const map = useMap();
+  const prevKeyRef = useRef("");
+
+  useEffect(() => {
+    if (!markers.length) return;
+    const key = markers.map((m) => m.listing.id).sort().join(",");
+    if (key === prevKeyRef.current) return; // same set — user just panned, don't interfere
+    prevKeyRef.current = key;
+
+    const bounds = L.latLngBounds(markers.map((m) => [m.lat, m.lng]));
+    if (!map.getBounds().intersects(bounds)) {
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: DEFAULT_ZOOM });
+    }
+  }, [map, markers]);
 
   return null;
 }
@@ -251,6 +271,9 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
 
         {/* Keeps scroll list in sync with the visible map area */}
         <BoundsTracker markers={markers} onVisibleChange={onVisibleChange} />
+
+        {/* Pan to show markers when search changes the result set */}
+        <FitBoundsOnChange markers={markers} />
 
         {markers.map(({ listing, lat, lng }) => (
           <Marker
