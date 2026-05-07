@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.orm import Query
 from app.models.listing import Listing
+from app.models.location import Location
 from app.models.item_image import ItemImage
 from sqlalchemy import func
 from math import ceil
@@ -82,7 +83,10 @@ def get_available_listings_paginated(
     page_size: int,
     q: str | None = None,
 ):
-    query = db.query(Listing).filter(Listing.status == "available")
+    query = db.query(Listing).options(
+        joinedload(Listing.images),
+        joinedload(Listing.location),
+    ).filter(Listing.status == "available")
 
     if q:
         like_pattern = f"%{q.strip()}%"
@@ -112,7 +116,7 @@ def get_available_listings_paginated(
         "total_pages": total_pages,
     }
 
-def create_listing(db: Session, user_id: str, payload: dict, image_url: str | None = None):
+def create_listing(db: Session, user_id: str, payload: dict, image_url: str | None = None, latitude: float | None = None, longitude: float | None = None):
     """
     Create a new listing in the database.
     If image_url is provided, also create an item_image record.
@@ -135,7 +139,19 @@ def create_listing(db: Session, user_id: str, payload: dict, image_url: str | No
     )
     
     db.add(listing)
-    db.flush()  # Flush to get the listing ID before adding image
+    db.flush()  # Flush to get the listing ID before adding image/location
+
+    # If lat/lng provided, create a Location row and link it
+    if latitude is not None and longitude is not None:
+        location = Location(
+            id=str(uuid.uuid4()),
+            latitude=latitude,
+            longitude=longitude,
+            city=payload.get("city"),
+        )
+        db.add(location)
+        db.flush()
+        listing.location_id = location.id
     
     # If image URL provided, create item_image record
     # Skip base64 data URLs and overly long URLs (database index limit is ~2700 chars)
