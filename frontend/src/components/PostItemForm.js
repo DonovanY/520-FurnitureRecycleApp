@@ -134,6 +134,93 @@ function PostItemForm({
         <div className="space-y-5">
           <h3 className="text-base font-semibold text-gray-900 border-b pb-2">Location & Pickup</h3>
 
+          {/* Location choice toggle */}
+          <FieldGroup label="Item Location" required>
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setLocationChoice("current")}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  locationChoice === "current"
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                Use my current location
+              </button>
+              <div className="w-px bg-gray-300" />
+              <button
+                type="button"
+                onClick={() => setLocationChoice("address")}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  locationChoice === "address"
+                    ? "bg-green-600 text-white"
+                    : "bg-white text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                Enter item address
+              </button>
+            </div>
+            {locationChoice === "current" && (
+              <p className="text-xs text-gray-500 mt-1">
+                Your device's GPS will be used to pin the item on the map. The address will be detected automatically.
+              </p>
+            )}
+          </FieldGroup>
+
+          {/* Manual address fields */}
+          {locationChoice === "address" && (
+            <div className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <FieldGroup label="Address Line 1">
+                <input
+                  className={inputClass}
+                  type="text"
+                  placeholder="e.g., 123 Main Street"
+                  value={addressLine1}
+                  onChange={(e) => setAddressLine1(e.target.value)}
+                />
+              </FieldGroup>
+              <FieldGroup label="Address Line 2">
+                <input
+                  className={inputClass}
+                  type="text"
+                  placeholder="e.g., Apt 4B (optional)"
+                  value={addressLine2}
+                  onChange={(e) => setAddressLine2(e.target.value)}
+                />
+              </FieldGroup>
+              <div className="grid grid-cols-2 gap-3">
+                <FieldGroup label="State">
+                  <input
+                    className={inputClass}
+                    type="text"
+                    placeholder="e.g., MA"
+                    value={addressState}
+                    onChange={(e) => setAddressState(e.target.value)}
+                  />
+                </FieldGroup>
+                <FieldGroup label="Postal Code">
+                  <input
+                    className={inputClass}
+                    type="text"
+                    placeholder="e.g., 01002"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                  />
+                </FieldGroup>
+              </div>
+              <FieldGroup label="Country">
+                <input
+                  className={inputClass}
+                  type="text"
+                  placeholder="e.g., United States"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                />
+              </FieldGroup>
+            </div>
+          )}
+
           <FieldGroup label="City" required>
             <input
               className={inputClass}
@@ -168,12 +255,6 @@ function PostItemForm({
               value={pickupNotes}
               onChange={(e) => setPickupNotes(e.target.value)}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Share your availability, general area/neighborhood, or specific location.
-              <span className="block mt-0.5">
-                💡 Tip: For privacy, share exact address only after someone requests the item
-              </span>
-            </p>
           </FieldGroup>
         </div>
 
