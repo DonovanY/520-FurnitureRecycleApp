@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import SearchBar from "../components/SearchBar";
 import ItemGrid from "../components/ItemGrid";
@@ -55,6 +55,13 @@ function DashboardView() {
   const [visibleListings, setVisibleListings] = useState([]);
   const [selectedListingId, setSelectedListingId] = useState(null);
   const isMapMode = viewMode === "map";
+
+  const handleVisibleChange = useCallback((next) => {
+    setVisibleListings(next);
+    setSelectedListingId((prev) =>
+      next.some((l) => l.id === prev) ? prev : null
+    );
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,12 +129,7 @@ function DashboardView() {
               <>
                 <MapView
                   listings={listings}
-                  onVisibleChange={(next) => {
-                    setVisibleListings(next);
-                    setSelectedListingId((prev) =>
-                      next.some((l) => l.id === prev) ? prev : null
-                    );
-                  }}
+                  onVisibleChange={handleVisibleChange}
                   onSelectListing={setSelectedListingId}
                 />
 
