@@ -76,6 +76,19 @@ function usePostItem() {
     setSuccess(false);
 
     try {
+      // Try to get device GPS silently; don't block submission if unavailable
+      let latitude = null;
+      let longitude = null;
+      try {
+        const pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+        );
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+      } catch {
+        // GPS denied or unavailable — proceed without coordinates
+      }
+
       const payload = {
         title: title.trim(),
         category,
@@ -86,6 +99,7 @@ function usePostItem() {
         ...(pickupType && { pickup_type: pickupType }),
         ...(pickupNotes.trim() && { pickup_notes: pickupNotes.trim() }),
         ...(imageUrl.trim() && { image_url: imageUrl.trim() }),
+        ...(latitude !== null && { latitude, longitude }),
       };
 
       const result = await createListing(payload);
