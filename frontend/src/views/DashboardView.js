@@ -75,16 +75,16 @@ function DashboardView() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Available Items</h1>
             <p className="text-gray-500 mt-1">Find free furniture in your community.</p>
           </div>
           <button
             onClick={handleCreateListing}
-            className="shrink-0 flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-all active:scale-95"
+            className="shrink-0 self-end flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-green-700 transition-all active:scale-95"
           >
-            <span className="text-lg">+</span> Create Listing
+            <span className="text-lg">+</span> Add New Item
           </button>
         </div>
 
