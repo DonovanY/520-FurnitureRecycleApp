@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useCallback } from "react";
 import Navbar from "../components/Navbar";
 import SearchBar from "../components/SearchBar";
@@ -51,10 +51,13 @@ function DashboardView() {
     navigate("/post");
   };
 
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "map"
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewMode = searchParams.get("mode") === "map" ? "map" : "grid";
+  const isMapMode = viewMode === "map";
+  const setViewMode = (mode) => setSearchParams({ mode }, { replace: true });
+
   const [visibleListings, setVisibleListings] = useState([]);
   const [selectedListingId, setSelectedListingId] = useState(null);
-  const isMapMode = viewMode === "map";
 
   const handleVisibleChange = useCallback((next) => {
     setVisibleListings(next);

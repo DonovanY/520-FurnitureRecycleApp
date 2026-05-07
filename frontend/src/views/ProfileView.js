@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import useProfile from "../controllers/useProfile";
 import SearchBar from "../components/SearchBar";
@@ -365,7 +365,10 @@ const TABS = [
 // ─── Main ProfileView ──────────────────────────────────────────────────────────
 function ProfileView() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("settings");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const VALID_TABS = ["settings", "posted", "requested"];
+  const activeTab = VALID_TABS.includes(searchParams.get("tab")) ? searchParams.get("tab") : "settings";
+  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   const {
     fullName,
     setFullName,
