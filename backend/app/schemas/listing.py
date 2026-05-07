@@ -129,3 +129,22 @@ class CreateListingResponse(BaseModel):
     id: str
     message: str = "Listing created successfully"
 
+class UpdateListingPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    title: Optional[str] = None
+    category: Optional[str] = None
+    condition_level: Optional[str] = None
+    origin_type: Optional[str] = None
+    city: Optional[str] = None
+    description: Optional[str] = None
+    pickup_type: Optional[str] = None
+    pickup_notes: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+
