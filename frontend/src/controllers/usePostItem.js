@@ -84,8 +84,6 @@ function usePostItem({ initialData = null, listingId = null } = {}) {
     if (locationChoice === "address") {
       if (!addressLine1.trim()) { setError("Address Line 1 is required"); return; }
       if (!city.trim()) { setError("City is required"); return; }
-    } else {
-      if (!city.trim()) { setError("City is required (used as fallback if GPS is unavailable)"); return; }
     }
 
     if (imageUrl.trim()) {
@@ -122,7 +120,6 @@ function usePostItem({ initialData = null, listingId = null } = {}) {
           latitude = pos.coords.latitude;
           longitude = pos.coords.longitude;
           locationFields = await reverseGeocode(latitude, longitude);
-          if (!locationFields.city) locationFields.city = city.trim();
         } catch {
           setError("GPS access was denied or timed out. Please allow location access or switch to 'Enter item address'.");
           setLoading(false);

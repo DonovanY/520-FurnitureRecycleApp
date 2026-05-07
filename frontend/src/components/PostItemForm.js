@@ -164,24 +164,13 @@ function PostItemForm({
             </div>
           </FieldGroup>
 
-          {/* Current location — GPS required; city is fallback label only */}
+          {/* Current location — GPS only */}
           {locationChoice === "current" && (
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
               <p className="text-xs text-gray-500">
                 Your device's GPS will pin the item on the map and auto-fill the address.
                 GPS access is <span className="font-medium text-gray-700">required</span> for this option.
               </p>
-              <FieldGroup label="City" required>
-                <input
-                  className={inputClass}
-                  type="text"
-                  placeholder="e.g., Amherst, Northampton, Hadley"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-gray-400 mt-1">Used as a fallback label if GPS reverse-geocoding doesn't return a city</p>
-              </FieldGroup>
             </div>
           )}
 
