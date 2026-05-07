@@ -142,12 +142,14 @@ def create_listing(db: Session, user_id: str, payload: dict, image_url: str | No
     db.add(listing)
     db.flush()  # Flush to get the listing ID before adding image/location
 
-    # If lat/lng provided, create a Location row and link it
-    if latitude is not None and longitude is not None:
+    # Create a Location row when we have coordinates or any address fields
+    has_coords = latitude is not None and longitude is not None
+    has_address = any(payload.get(f) for f in ("address_line_1", "city", "state", "postal_code", "country"))
+    if has_coords or has_address:
         location = Location(
             id=str(uuid.uuid4()),
-            latitude=latitude,
-            longitude=longitude,
+            latitude=latitude if has_coords else None,
+            longitude=longitude if has_coords else None,
             address_line_1=payload.get("address_line_1"),
             address_line_2=payload.get("address_line_2"),
             city=payload.get("city"),

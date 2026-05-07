@@ -76,7 +76,13 @@ function usePostItem() {
     if (!category) { setError("Category is required"); return; }
     if (!conditionLevel) { setError("Condition is required"); return; }
     if (!originType) { setError("Origin type is required"); return; }
-    if (!city.trim()) { setError("City is required"); return; }
+
+    if (locationChoice === "address") {
+      if (!addressLine1.trim()) { setError("Address Line 1 is required"); return; }
+      if (!city.trim()) { setError("City is required"); return; }
+    } else {
+      if (!city.trim()) { setError("City is required (used as fallback if GPS is unavailable)"); return; }
+    }
 
     if (imageUrl.trim()) {
       if (imageUrl.startsWith("data:")) {
@@ -84,7 +90,7 @@ function usePostItem() {
         return;
       }
       if (imageUrl.length > 2000) {
-        setError("Image URL is too long (under 2000 characters).");
+        setError("Image URL is too long (must be under 2000 characters).");
         return;
       }
     }
@@ -100,28 +106,37 @@ function usePostItem() {
 
       if (locationChoice === "current") {
         // GPS → reverse geocode for address
+        if (!navigator.geolocation) {
+          setError("Your browser does not support GPS. Please switch to 'Enter item address'.");
+          setLoading(false);
+          return;
+        }
         try {
           const pos = await new Promise((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 })
           );
           latitude = pos.coords.latitude;
           longitude = pos.coords.longitude;
           locationFields = await reverseGeocode(latitude, longitude);
-          // Keep user-entered city as fallback if reverse geocode didn't return one
           if (!locationFields.city) locationFields.city = city.trim();
         } catch {
-          // GPS denied — submit without location
+          setError("GPS access was denied or timed out. Please allow location access or switch to 'Enter item address'.");
+          setLoading(false);
+          return;
         }
       } else {
-        // Manual address → forward geocode for lat/lng
+        // Manual address → forward geocode for lat/lng (required)
         const coords = await forwardGeocode(
           addressLine1.trim(), addressLine2.trim(),
           city.trim(), addressState.trim(), postalCode.trim(), country.trim()
         );
-        if (coords) {
-          latitude = coords.latitude;
-          longitude = coords.longitude;
+        if (!coords) {
+          setError("Address not found. Please try a more specific address (include street number, city, and state).");
+          setLoading(false);
+          return;
         }
+        latitude = coords.latitude;
+        longitude = coords.longitude;
         locationFields = {
           address_line_1: addressLine1.trim() || null,
           address_line_2: addressLine2.trim() || null,
@@ -141,7 +156,8 @@ function usePostItem() {
         ...(pickupType && { pickup_type: pickupType }),
         ...(pickupNotes.trim() && { pickup_notes: pickupNotes.trim() }),
         ...(imageUrl.trim() && { image_url: imageUrl.trim() }),
-        ...(latitude !== null && { latitude, longitude }),
+        latitude,
+        longitude,
         ...locationFields,
       };
 

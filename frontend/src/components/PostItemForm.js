@@ -163,11 +163,12 @@ function PostItemForm({
             </div>
           </FieldGroup>
 
-          {/* Current location — just ask for city as a fallback label */}
+          {/* Current location — GPS required; city is fallback label only */}
           {locationChoice === "current" && (
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
               <p className="text-xs text-gray-500">
-                Your device's GPS will pin the item on the map and detect the address automatically.
+                Your device's GPS will pin the item on the map and auto-fill the address.
+                GPS access is <span className="font-medium text-gray-700">required</span> for this option.
               </p>
               <FieldGroup label="City" required>
                 <input
@@ -178,7 +179,7 @@ function PostItemForm({
                   onChange={(e) => setCity(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-400 mt-1">Used as a fallback if GPS is unavailable</p>
+                <p className="text-xs text-gray-400 mt-1">Used as a fallback label if GPS reverse-geocoding doesn't return a city</p>
               </FieldGroup>
             </div>
           )}
@@ -186,13 +187,18 @@ function PostItemForm({
           {/* Manual address fields — city is part of the block */}
           {locationChoice === "address" && (
             <div className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <FieldGroup label="Address Line 1">
+              <p className="text-xs text-gray-500">
+                The address will be geocoded to place the item on the map.
+                A valid, specific address is <span className="font-medium text-gray-700">required</span>.
+              </p>
+              <FieldGroup label="Address Line 1" required>
                 <input
                   className={inputClass}
                   type="text"
                   placeholder="e.g., 123 Main Street"
                   value={addressLine1}
                   onChange={(e) => setAddressLine1(e.target.value)}
+                  required
                 />
               </FieldGroup>
               <FieldGroup label="Address Line 2">
