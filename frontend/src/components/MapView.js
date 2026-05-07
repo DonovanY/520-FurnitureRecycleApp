@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Link } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -61,19 +61,38 @@ function LocationSetter({ userLocation }) {
 function BoundsTracker({ markers, onVisibleChange }) {
   const map = useMap();
 
-  const updateVisible = useCallback(() => {
+  // Refs hold latest values so the stable event handler never goes stale
+  const markersRef = useRef(markers);
+  markersRef.current = markers;
+  const onVisibleChangeRef = useRef(onVisibleChange);
+  onVisibleChangeRef.current = onVisibleChange;
+
+  // Register map events once; raw on/off avoids react-leaflet v4's per-render teardown
+  useEffect(() => {
+    function handleUpdate() {
+      const bounds = map.getBounds();
+      const visible = markersRef.current
+        .filter((m) => bounds.contains([m.lat, m.lng]))
+        .map((m) => m.listing);
+      onVisibleChangeRef.current(visible);
+    }
+    map.on("moveend", handleUpdate);
+    map.on("zoomend", handleUpdate);
+    handleUpdate(); // initial population
+    return () => {
+      map.off("moveend", handleUpdate);
+      map.off("zoomend", handleUpdate);
+    };
+  }, [map]); // stable — only runs once per map instance
+
+  // Re-compute when the marker set changes (e.g. search results updated)
+  useEffect(() => {
     const bounds = map.getBounds();
-    const visible = markers
+    const visible = markersRef.current
       .filter((m) => bounds.contains([m.lat, m.lng]))
       .map((m) => m.listing);
-    onVisibleChange(visible);
-  }, [map, markers, onVisibleChange]);
-
-  useMapEvents({ moveend: updateVisible, zoomend: updateVisible });
-
-  useEffect(() => {
-    updateVisible();
-  }, [updateVisible]);
+    onVisibleChangeRef.current(visible);
+  }, [markers, map]);
 
   return null;
 }
@@ -107,7 +126,6 @@ const CONDITION_LABEL = {
 
 // Geolocation states: "pending" | "granted" | "denied"
 export default function MapView({ listings, onVisibleChange, onSelectListing }) {
-  const [markers, setMarkers] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [geoStatus, setGeoStatus] = useState("pending"); // pending | granted | denied
 
@@ -127,13 +145,14 @@ export default function MapView({ listings, onVisibleChange, onSelectListing }) 
     );
   }, []);
 
-  // Build markers from listings that have exact coordinates
-  useEffect(() => {
-    const built = listings
-      .filter((l) => l.latitude && l.longitude)
-      .map((l) => ({ listing: l, lat: l.latitude, lng: l.longitude }));
-    setMarkers(built);
-  }, [listings]);
+  // Derive markers synchronously — stable reference as long as listings is stable
+  const markers = useMemo(
+    () =>
+      listings
+        .filter((l) => l.latitude && l.longitude)
+        .map((l) => ({ listing: l, lat: l.latitude, lng: l.longitude })),
+    [listings]
+  );
 
   // While waiting for browser geolocation response, show a prompt screen
   if (geoStatus === "pending") {

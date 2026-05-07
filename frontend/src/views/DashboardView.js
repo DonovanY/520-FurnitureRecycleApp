@@ -60,7 +60,11 @@ function DashboardView() {
   const [selectedListingId, setSelectedListingId] = useState(null);
 
   const handleVisibleChange = useCallback((next) => {
-    setVisibleListings(next);
+    setVisibleListings((prev) => {
+      const prevKey = prev.map((l) => l.id).sort().join(",");
+      const nextKey = next.map((l) => l.id).sort().join(",");
+      return prevKey === nextKey ? prev : next;
+    });
     setSelectedListingId((prev) =>
       next.some((l) => l.id === prev) ? prev : null
     );
