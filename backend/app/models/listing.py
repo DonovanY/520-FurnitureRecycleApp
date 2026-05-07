@@ -24,11 +24,12 @@ class Listing(Base):
     is_public = Column(Boolean, nullable=False, default=True)
 
     city = Column(String, nullable=True)
-    location_id = Column(String, nullable=True)
+    location_id = Column(String, ForeignKey("locations.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     poster = relationship("Profile", back_populates="listings")
+    location = relationship("Location", foreign_keys=[location_id])
     requests = relationship("ItemRequest", back_populates="listing")
     images = relationship(
         "ItemImage",

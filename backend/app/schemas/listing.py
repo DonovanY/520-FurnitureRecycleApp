@@ -5,6 +5,8 @@ from pydantic import BaseModel
 class LocationSchema(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class ItemSchema(BaseModel):
     title: str
@@ -108,6 +110,8 @@ class CreateListingPayload(BaseModel):
     pickup_type: Optional[str] = None
     pickup_notes: Optional[str] = None
     image_url: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class CreateListingResponse(BaseModel):
     id: str
