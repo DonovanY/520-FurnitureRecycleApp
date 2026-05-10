@@ -1,7 +1,4 @@
-from uuid import UUID
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
-
 from app.models.notification import Notification
 
 
@@ -15,25 +12,59 @@ class NotificationRepository:
         self.db.refresh(notification)
         return notification
 
-    def list(self, user_id: UUID, page: int, page_size: int):
-        offset = (page - 1) * page_size
+    def get_by_id(self, notification_id):
+        return (
+            self.db.query(Notification)
+            .filter(Notification.id == notification_id)
+            .first()
+        )
 
-        stmt = (
-            select(Notification)
-            .where(Notification.user_id == user_id)
+    def unread_count(self, user_id):
+        return (
+            self.db.query(Notification)
+            .filter(
+                Notification.user_id == user_id,
+                Notification.is_read == False,
+            )
+            .count()
+        )
+
+    def mark_as_read(self, notification_id):
+        notification = self.get_by_id(notification_id)
+
+        if not notification:
+            return None
+
+        notification.is_read = True
+        self.db.commit()
+        self.db.refresh(notification)
+        return notification
+
+    def mark_all_as_read(self, user_id):
+        updated_count = (
+            self.db.query(Notification)
+            .filter(
+                Notification.user_id == user_id,
+                Notification.is_read == False,
+            )
+            .update({"is_read": True}, synchronize_session=False)
+        )
+
+        self.db.commit()
+        return updated_count
+
+    def list_by_user(self, user_id, page: int, page_size: int):
+        query = (
+            self.db.query(Notification)
+            .filter(Notification.user_id == user_id)
             .order_by(Notification.created_at.desc())
-            .offset(offset)
+        )
+
+        total = query.count()
+        items = (
+            query.offset((page - 1) * page_size)
             .limit(page_size)
+            .all()
         )
-        return list(self.db.scalars(stmt))
 
-    def count(self, user_id: UUID):
-        stmt = select(func.count()).where(Notification.user_id == user_id)
-        return self.db.scalar(stmt)
-
-    def unread_count(self, user_id: UUID):
-        stmt = select(func.count()).where(
-            Notification.user_id == user_id,
-            Notification.is_read == False,
-        )
-        return self.db.scalar(stmt)
+        return total, items

@@ -10,6 +10,8 @@ from app.crud import listing as listing_crud
 from app.schemas.message import MessageCreateSchema, MessageResponse, ConversationResponse
 from app.models.message import Message
 from app.models.profile import Profile
+from app.repositories.notification_repository import NotificationRepository
+from app.services.notification_service import NotificationService
 
 router = APIRouter()
 
@@ -45,8 +47,22 @@ def send_message(
     
     created_message = message_crud.create_message(db, message)
     
-    # Get sender and recipient names
+    notification_service = NotificationService(NotificationRepository(db))
     sender = db.query(Profile).filter(Profile.id == sender_id).first()
+
+    sender_name = None
+    if sender:
+        sender_name = sender.full_name or sender.email
+
+    notification_service.create_notification(
+        user_id=message_data.recipient_user_id,
+        notification_type="new_message",
+        title="New message",
+        message=f"{sender_name or 'Someone'} sent you a message about '{listing.title}'.",
+        listing_id=message_data.listing_id,
+        message_id=created_message.id,
+    )
+
     recipient = db.query(Profile).filter(Profile.id == message_data.recipient_user_id).first()
     
     return MessageResponse(

@@ -21,7 +21,7 @@ app.add_middleware(
 
 app.include_router(user.router)
 app.include_router(listings.router)
-app.include_router(notifications_router)
+app.include_router(notifications_router, prefix="/api/v1", tags=["notifications"])
 app.include_router(profile.router)
 app.include_router(requests_router, prefix="/api/v1", tags=["requests"])
 app.include_router(messages_router, prefix="/api/v1", tags=["messages"])

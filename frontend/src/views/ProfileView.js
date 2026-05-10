@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import useProfile from "../controllers/useProfile";
@@ -8,6 +8,7 @@ import PostedItemCard from "../components/PostedItemCard";
 import useProfileListing from "../controllers/useProfileListing";
 import useRequestedItems from "../controllers/useRequestedItems";
 import { useAuth } from "../context/AuthContext";
+import RequestsModal from "../components/RequestsModal";
 
 // ─── Shared input styles ───────────────────────────────────────────────────────
 const inputClass =
@@ -18,7 +19,14 @@ const selectClass = `${inputClass} cursor-pointer appearance-none pr-9`;
 // ─── Small reusable components ─────────────────────────────────────────────────
 function ChevronIcon({ className }) {
   return (
-    <svg className={className} width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      aria-hidden
+    >
       <path
         d="M3 5l4 4 4-4"
         stroke="currentColor"
@@ -73,6 +81,7 @@ function TextField({
   spellCheck,
 }) {
   const controlled = value !== undefined && onChange !== undefined;
+
   return (
     <FieldGroup label={label} htmlFor={id}>
       <input
@@ -105,7 +114,12 @@ function ProfileSettingsTab({
 }) {
   return (
     <form onSubmit={handleEditProfile}>
-      {error && <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       {success && !error && (
         <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
           Profile updated successfully.
@@ -113,7 +127,6 @@ function ProfileSettingsTab({
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-8">
-        {/* Personal details */}
         <section
           className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
           aria-labelledby="personal-heading"
@@ -124,6 +137,7 @@ function ProfileSettingsTab({
           >
             Personal Details
           </h3>
+
           <div className="flex flex-col gap-5">
             <TextField
               id="profile-full-name"
@@ -133,6 +147,7 @@ function ProfileSettingsTab({
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
+
             <SelectField
               label="Gender"
               options={["Male", "Female", "Non-binary", "Prefer not to say"]}
@@ -142,7 +157,6 @@ function ProfileSettingsTab({
           </div>
         </section>
 
-        {/* Account */}
         <section
           className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
           aria-labelledby="account-heading"
@@ -153,6 +167,7 @@ function ProfileSettingsTab({
           >
             Account
           </h3>
+
           <div className="flex flex-col gap-5">
             <TextField
               id="profile-gmail"
@@ -163,6 +178,7 @@ function ProfileSettingsTab({
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
             />
+
             <TextField
               id="profile-password"
               label={newPassword.length > 0 ? "New password" : "Password"}
@@ -177,7 +193,6 @@ function ProfileSettingsTab({
         </section>
       </div>
 
-      {/* Save button — full width row, aligned to the right */}
       <div className="mt-6 flex justify-end">
         <button
           type="submit"
@@ -194,6 +209,9 @@ function ProfileSettingsTab({
 // ─── Tab: Posted Items ─────────────────────────────────────────────────────────
 function PostedItemsTab() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [requestsModalListing, setRequestsModalListing] = useState(null);
+
   const {
     listings,
     searchQuery,
@@ -207,8 +225,46 @@ function PostedItemsTab() {
     goToNextPage,
   } = useProfileListing();
 
+  useEffect(() => {
+    const shouldOpenRequests = searchParams.get("openRequests") === "1";
+    const targetListingId = searchParams.get("listingId");
+
+    if (!shouldOpenRequests || !targetListingId || loading || !listings?.length) {
+      return;
+    }
+
+    if (String(requestsModalListing?.id) === String(targetListingId)) {
+      return;
+    }
+
+    const targetListing = listings.find(
+      (listing) => String(listing.id) === String(targetListingId)
+    );
+
+    if (!targetListing) {
+      return;
+    }
+
+    setRequestsModalListing({
+      id: targetListing.id,
+      title: targetListing.item?.title || targetListing.title || "Listing",
+    });
+  }, [searchParams, loading, listings, requestsModalListing]);
+
+  function handleCloseRequestsModal() {
+    setRequestsModalListing(null);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", "posted");
+    nextParams.delete("openRequests");
+    nextParams.delete("listingId");
+    nextParams.delete("requestId");
+
+    setSearchParams(nextParams, { replace: true });
+  }
+
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex w-full items-center justify-between gap-4">
         <div className="flex-1 max-w-lg">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
@@ -224,7 +280,9 @@ function PostedItemsTab() {
 
       {error && <div className="text-red-600 text-center py-8">{error}</div>}
 
-      {!error && loading && <div className="text-center py-16 text-gray-400">Loading...</div>}
+      {!error && loading && (
+        <div className="text-center py-16 text-gray-400">Loading...</div>
+      )}
 
       {!error && !loading && (
         <>
@@ -241,45 +299,55 @@ function PostedItemsTab() {
               Page {page} of {totalPages} · {total} items
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={goToPrevPage}
-                  disabled={page <= 1}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Previous
-                </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={goToPrevPage}
+                disabled={page <= 1}
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
 
-                <span className="flex items-center px-4 text-sm font-medium text-gray-600 bg-gray-100 rounded-md py-2">
-                  {page} / {totalPages}
-                </span>
+              <span className="flex items-center px-4 text-sm font-medium text-gray-600 bg-gray-100 rounded-md py-2">
+                {page} / {totalPages}
+              </span>
 
-                <button
-                  type="button"
-                  onClick={goToNextPage}
-                  disabled={page >= totalPages}
-                  className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={goToNextPage}
+                disabled={page >= totalPages}
+                className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
             </div>
           </div>
         </>
       )}
-    </main>
+
+      {requestsModalListing && (
+        <RequestsModal
+          listingId={requestsModalListing.id}
+          listingTitle={requestsModalListing.title}
+          onClose={handleCloseRequestsModal}
+          onRequestUpdated={() => {}}
+        />
+      )}
+    </div>
   );
 }
 
 // ─── Tab: Requested Items ──────────────────────────────────────────────────────
 function RequestedItemsTab() {
-  const navigate = useNavigate();
   const { items, loading, error } = useRequestedItems();
 
   if (loading) {
-    return <div className="text-center py-16 text-gray-400">Loading requested items...</div>;
+    return (
+      <div className="text-center py-16 text-gray-400">
+        Loading requested items...
+      </div>
+    );
   }
 
   if (error) {
@@ -308,7 +376,11 @@ function RequestedItemsTab() {
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
             />
           </svg>
-          <p className="text-base font-medium text-gray-900">No requested items yet</p>
+
+          <p className="text-base font-medium text-gray-900">
+            No requested items yet
+          </p>
+
           <p className="text-sm text-gray-500 max-w-sm">
             When you request items from other users, they will appear here.
           </p>
@@ -317,7 +389,6 @@ function RequestedItemsTab() {
     );
   }
 
-  // Transform to format expected by ItemGrid
   const listings = items.map((item) => ({
     id: item.id,
     title: item.title,
@@ -331,7 +402,7 @@ function RequestedItemsTab() {
   }));
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-6">
         <p className="text-sm text-gray-600">
           {items.length} item{items.length !== 1 ? "s" : ""} requested
@@ -339,7 +410,7 @@ function RequestedItemsTab() {
       </div>
 
       <ItemGrid listings={listings} />
-    </main>
+    </div>
   );
 }
 
@@ -366,9 +437,16 @@ const TABS = [
 function ProfileView() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+
   const VALID_TABS = ["settings", "posted", "requested"];
-  const activeTab = VALID_TABS.includes(searchParams.get("tab")) ? searchParams.get("tab") : "settings";
-  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
+  const activeTab = VALID_TABS.includes(searchParams.get("tab"))
+    ? searchParams.get("tab")
+    : "settings";
+
+  const setActiveTab = (tab) => {
+    setSearchParams({ tab }, { replace: true });
+  };
+
   const {
     fullName,
     setFullName,
@@ -390,7 +468,6 @@ function ProfileView() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      {/* ── Page header ── */}
       <div className="bg-white">
         <div className="mx-auto max-w-7xl border-b border-gray-200 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 py-6">
@@ -407,6 +484,7 @@ function ProfileView() {
                 <ellipse cx="36" cy="62" rx="22" ry="14" fill="#e5e7eb" />
               </svg>
             </div>
+
             <div>
               <div className="text-lg font-semibold text-gray-900">
                 {user?.user_metadata?.full_name || user?.email}
@@ -414,10 +492,10 @@ function ProfileView() {
             </div>
           </div>
 
-          {/* ── Tab bar ── */}
           <nav className="-mb-px flex gap-6" aria-label="Profile tabs">
             {TABS.map((tab) => {
               const isActive = tab.key === activeTab;
+
               return (
                 <button
                   key={tab.key}
@@ -436,15 +514,16 @@ function ProfileView() {
         </div>
       </div>
 
-      {/* ── Sub-page content ── */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Sub-page header */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">{currentTab.label}</h2>
-          <p className="mt-1 text-sm text-gray-500">{currentTab.description}</p>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {currentTab.label}
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            {currentTab.description}
+          </p>
         </div>
 
-        {/* Tab content */}
         {activeTab === "posted" && <PostedItemsTab />}
         {activeTab === "requested" && <RequestedItemsTab />}
         {activeTab === "settings" && (

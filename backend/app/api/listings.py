@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -22,15 +23,25 @@ from app.schemas.listing import (
 )
 from app.services.listing_service import ListingService
 
+from app.crud.listing import (
+    create_listing as create_listing_crud,
+    get_listing_by_id,
+)
+from app.crud.request import get_requests_for_listing
+from app.models.profile import Profile
+from app.repositories.notification_repository import NotificationRepository
+from app.services.notification_service import NotificationService
+
+
 router = APIRouter(prefix="/api/v1/listings", tags=["listings"])
 
 
 def get_primary_image_url(listing):
     """
     Return the primary image URL for a listing.
-    - If there are no images, return None
-    - If an image is marked is_primary=True, use that
-    - Otherwise, use the first image
+    - If there are no images, return None.
+    - If an image is marked is_primary=True, use that.
+    - Otherwise, use the first image.
     """
     if not getattr(listing, "images", None):
         return None
@@ -44,6 +55,7 @@ def get_primary_image_url(listing):
 
 def to_listing_summary_response(listing, request_status=None) -> ListingSummaryResponse:
     loc = getattr(listing, "location", None)
+
     return ListingSummaryResponse(
         id=str(listing.id),
         item=ItemSchema(
@@ -74,6 +86,7 @@ def to_listing_detail_response(listing, user_request=None) -> ListingDetailRespo
     from app.schemas.listing import UserRequestSummary
 
     loc = getattr(listing, "location", None)
+
     return ListingDetailResponse(
         id=str(listing.id),
         item=ItemSchema(
@@ -112,12 +125,16 @@ def to_listing_detail_response(listing, user_request=None) -> ListingDetailRespo
         ),
         created_at=listing.created_at,
         request_status_for_current_user=user_request.status if user_request else None,
-        user_request=UserRequestSummary(
-            id=str(user_request.id),
-            message=user_request.message,
-            status=user_request.status,
-            created_at=user_request.created_at,
-        ) if user_request else None,
+        user_request=(
+            UserRequestSummary(
+                id=str(user_request.id),
+                message=user_request.message,
+                status=user_request.status,
+                created_at=user_request.created_at,
+            )
+            if user_request
+            else None
+        ),
         pickup_type=listing.pickup_type,
         pickup_notes=listing.pickup_notes,
     )
@@ -132,6 +149,7 @@ def get_listings(
     db: Session = Depends(get_db),
 ):
     service = ListingService(db)
+
     result = service.list_listings(
         page=page,
         page_size=page_size,
@@ -145,7 +163,7 @@ def get_listings(
         items=[
             to_listing_summary_response(
                 listing,
-                request_status=request_status_map.get(str(listing.id))
+                request_status=request_status_map.get(str(listing.id)),
             )
             for listing in result["items"]
         ],
@@ -166,10 +184,8 @@ def create_listing(
     Create a new listing.
     Requires authentication.
     """
-    from app.crud.listing import create_listing as create_listing_crud
-    
     user_id = auth_user.get("sub")
-    
+
     listing = create_listing_crud(
         db=db,
         user_id=user_id,
@@ -178,9 +194,7 @@ def create_listing(
         latitude=payload.latitude,
         longitude=payload.longitude,
     )
-    # Note: address fields (address_line_1/2, state, postal_code, country) are
-    # already in payload.model_dump() and read directly by create_listing_crud
-    
+
     return CreateListingResponse(id=str(listing.id))
 
 
@@ -191,7 +205,11 @@ def get_listing_detail(
     db: Session = Depends(get_db),
 ):
     service = ListingService(db)
-    listing, user_request = service.get_listing_detail(listing_id, current_user=auth_user)
+    listing, user_request = service.get_listing_detail(
+        listing_id,
+        current_user=auth_user,
+    )
+
     return to_listing_detail_response(listing, user_request)
 
 
@@ -203,15 +221,17 @@ def update_listing_route(
     db: Session = Depends(get_db),
 ):
     """
-    Partial update of a listing. Only the poster may edit.
+    Partial update of a listing.
+    Only the poster may edit.
     """
     service = ListingService(db)
+
     listing = service.update_listing(
         listing_id,
         auth_user,
         payload.model_dump(exclude_unset=True),
     )
-    # Owners can't request their own listing, so user_request is always None here.
+
     return to_listing_detail_response(listing, user_request=None)
 
 
@@ -222,15 +242,47 @@ def request_listing(
     auth_user: dict = Depends(validate_token),
     db: Session = Depends(get_db),
 ):
+    """
+    Request an item.
+
+    After the request is created, create a notification for the listing owner.
+    """
     service = ListingService(db)
-    request_obj = service.request_item(listing_id, auth_user, payload.message or "")
+
+    request_obj = service.request_item(
+        listing_id,
+        auth_user,
+        payload.message or "",
+    )
+
+    listing = get_listing_by_id(db, listing_id)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    requester_user_id = auth_user.get("sub")
+    requester = db.query(Profile).filter(Profile.id == requester_user_id).first()
+
+    requester_name = None
+    if requester:
+        requester_name = requester.full_name or requester.email
+
+    notification_service = NotificationService(NotificationRepository(db))
+    notification_service.create_notification(
+        user_id=listing.poster_user_id,
+        notification_type="new_request",
+        title="New item request",
+        message=f"{requester_name or 'Someone'} requested your item '{listing.title}'.",
+        listing_id=request_obj.listing_id,
+        request_id=request_obj.id,
+    )
 
     return ItemRequestResponse(
         id=str(request_obj.id),
         listing_id=str(request_obj.listing_id),
         requester=RequesterSummary(
-            id=str(auth_user.get("sub")),
-            email=auth_user.get("email"),
+            id=str(requester_user_id),
+            email=auth_user.get("email") or (requester.email if requester else ""),
+            full_name=requester.full_name if requester else None,
         ),
         message=request_obj.message,
         status=request_obj.status,
@@ -248,42 +300,37 @@ def get_listing_requests(
     Get all requests for a specific listing.
     Only the poster can view requests for their listing.
     """
-    from app.crud.listing import get_listing_by_id
-    from app.crud.request import get_requests_for_listing
-    from app.models.profile import Profile
-    
     user_id = auth_user.get("sub")
-    
-    # Verify the listing exists and user is the poster
+
     listing = get_listing_by_id(db, listing_id)
     if not listing:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Listing not found")
-    
-    if str(listing.poster_user_id) != user_id:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="Only the poster can view requests")
-    
-    # Get all requests with requester details
+
+    if str(listing.poster_user_id) != str(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Only the poster can view requests",
+        )
+
     requests = get_requests_for_listing(db, listing_id)
-    
-    # Build response
+
     request_responses = []
     for req in requests:
         requester = db.query(Profile).filter(Profile.id == req.requester_user_id).first()
+
         request_responses.append(
             ItemRequestResponse(
                 id=str(req.id),
                 listing_id=str(req.listing_id),
                 requester=RequesterSummary(
-                    id=str(requester.id),
-                    email=requester.email,
-                    full_name=requester.full_name,
+                    id=str(requester.id) if requester else str(req.requester_user_id),
+                    email=requester.email if requester else "",
+                    full_name=requester.full_name if requester else None,
                 ),
                 message=req.message,
                 status=req.status,
                 created_at=req.created_at,
             )
         )
-    
+
     return ListingRequestsResponse(requests=request_responses)
