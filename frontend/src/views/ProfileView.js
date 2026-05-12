@@ -436,7 +436,14 @@ const TABS = [
 // ─── Main ProfileView ──────────────────────────────────────────────────────────
 function ProfileView() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
 
   const VALID_TABS = ["settings", "posted", "requested"];
   const activeTab = VALID_TABS.includes(searchParams.get("tab"))
