@@ -1,5 +1,6 @@
 node_modules/
 auth.json
+auth2.json
 .env
 test-results/
 playwright-report/
