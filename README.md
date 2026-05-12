@@ -46,6 +46,69 @@ By supporting both reuse and community participation, the application promotes s
 
 The goal of this project is to build a practical and community-oriented platform that makes furniture reuse easier, reduces waste, and encourages sustainable habits through technology.
 
+## Installation & Setup
+
+### Prerequisites
+
+- Node.js 18+
+- Python 3.10+
+- A Supabase project (see [supabase.com](https://supabase.com))
+
+### Backend
+
+```bash
+cd backend
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Create a `.env` file in `backend/` with the following:
+
+```
+SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-us-west-2.pooler.supabase.com:5432/postgres
+```
+
+> Use the **Session Pooler** connection string from Supabase → Connect → Session pooler → URI. The direct connection URL uses IPv6 and will fail on most networks.
+
+Start the backend:
+
+```bash
+uvicorn main:app --reload
+```
+
+The API will be available at `http://localhost:8000`.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+```
+
+Create a `.env` file in `frontend/` with the following:
+
+```
+REACT_APP_SUPABASE_URL=https://<your-project-ref>.supabase.co
+REACT_APP_SUPABASE_ANON_KEY=<your-anon-key>
+REACT_APP_API_URL=http://localhost:8000
+```
+
+Start the frontend:
+
+```bash
+npm start
+```
+
+The app will be available at `http://localhost:3000`.
+
+
 ## Team Members
 
 - Donovan Yeung  
